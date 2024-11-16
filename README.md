@@ -1,5 +1,3 @@
-Here's a detailed explanation of both Python scripts that you can include in the `README.md` to help users understand their functionality:
-
 ---
 
 # REAPER MIDI and FX Control Scripts
