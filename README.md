@@ -23,7 +23,7 @@ These scripts are designed to be used with **REAPER's distant API**, which allow
 You can install the necessary Python dependencies with:
 
 ```bash
-pip install reapy openai pydantic
+pip install reapy openai pydantic keyboard
 ```
 
 ## Scripts
