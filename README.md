@@ -134,7 +134,7 @@ python 1_enable_distAPI.py
 You can easily customize the scripts to better fit your specific needs. It's encouraged to open them in **VS Code** and modify parameters such as velocity thresholds, key bindings, or the number of tracks generated. To open the code in VS Code, you can simply run the following script using the "ReaScript: Run ReaScript" command in Reaper.
 
 ```bash
-python 1_enable_distAPI.py
+1_enable_distAPI.py
 ```
 
 This will open the project folder in **VS Code**, allowing you to make any adjustments you need.
