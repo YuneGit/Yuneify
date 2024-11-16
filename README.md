@@ -17,7 +17,7 @@ These scripts are designed to be used with **REAPER's distant API**, which allow
 
 - **REAPER** installed on your system.
 - **reapy** library for Python to interact with REAPER.
-- **VS Code** or any other Python IDE for easy code editing and customization.
+- **VS Code** (or any other IDE) is required for editing and customizing the scripts. It ensures compatibility with the REAPER API and allows for easy management of Python files.
 - The **SWS/S&M extension** for REAPER to enable the action for floating FX window functionality.
 
 You can install the necessary Python dependencies with:
@@ -25,6 +25,7 @@ You can install the necessary Python dependencies with:
 ```bash
 pip install reapy openai pydantic keyboard
 ```
+
 ### How to Get an OpenAI API Key and Set It Using `setx`
 
 To interact with OpenAI's API, you'll need an API key. Here's how to obtain and set it:
@@ -106,7 +107,7 @@ This script monitors the `Alt` key press and automatically opens the floating FX
 - Open your REAPER project.
 
 ### 2. **Enable Distant API**
-Run **`1_enable_distAPI.py`** to enable the REAPER distant API and open **VS Code** for easy code editing:
+Run **`1_enable_distAPI.py`** to enable the REAPER distant API and open **VS Code** for easy code editing (VS Code is required for customization):
 
 ```bash
 python 1_enable_distAPI.py
@@ -131,7 +132,7 @@ python 1_enable_distAPI.py
   ```
 
 ### 4. **Customizing the Scripts**
-You can easily customize the scripts to better fit your specific needs. It's encouraged to open them in **VS Code** and modify parameters such as velocity thresholds, key bindings, or the number of tracks generated. To open the code in VS Code, you can simply run the following script using the "ReaScript: Run ReaScript" command in Reaper.
+Customization of the scripts is required to fit your specific needs. Open the scripts in **VS Code**, which is the recommended environment for editing, and modify parameters such as velocity thresholds, key bindings, or the number of tracks generated. You can easily open them in **VS Code** by running the following script using the "ReaScript: Run ReaScript" command in REAPER:
 
 ```bash
 1_enable_distAPI.py
