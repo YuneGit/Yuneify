@@ -1,5 +1,3 @@
-Here's a detailed explanation of both Python scripts that you can include in the `README.md` to help users understand their functionality:
-
 ---
 
 # REAPER MIDI and FX Control Scripts
@@ -25,8 +23,44 @@ These scripts are designed to be used with **REAPER's distant API**, which allow
 You can install the necessary Python dependencies with:
 
 ```bash
-pip install reapy openai pydantic
+pip install reapy openai pydantic keyboard
 ```
+### How to Get an OpenAI API Key and Set It Using `setx`
+
+To interact with OpenAI's API, you'll need an API key. Here's how to obtain and set it:
+
+#### Step 1: Obtain the API Key
+1. Visit [OpenAI's API page](https://platform.openai.com/signup) to sign up or log in.
+2. Once logged in, go to the API section of your account and generate a new API key.
+3. Copy the generated API key.
+
+#### Step 2: Set the API Key in Your System
+You can use the `setx` command to set the OpenAI API key as an environment variable in Windows:
+
+1. Open **Command Prompt** (CMD) or **PowerShell**.
+2. Run the following command, replacing `your_api_key_here` with the API key you copied:
+
+   ```bash
+   setx OPENAI_API_KEY "your_api_key_here"
+   ```
+
+This will set the `OPENAI_API_KEY` as an environment variable, allowing your scripts to access the key.
+
+#### Step 3: Verify the API Key
+To confirm that the API key was set correctly, you can open a new Command Prompt window and run:
+
+```bash
+echo %OPENAI_API_KEY%
+```
+
+It should display your API key. If the key is visible, you're all set!
+
+#### Troubleshooting
+If you encounter issues, make sure:
+- The environment variable is set correctly and the new Command Prompt window is used.
+- Your API key is valid and active by checking your OpenAI account.
+
+Once the API key is set, your scripts will automatically use it to make requests to OpenAI's API.
 
 ## Scripts
 
@@ -97,10 +131,10 @@ python 1_enable_distAPI.py
   ```
 
 ### 4. **Customizing the Scripts**
-You can easily customize the scripts to better fit your specific needs. It's encouraged to open them in **VS Code** and modify parameters such as velocity thresholds, key bindings, or the number of tracks generated. To open the code in VS Code, you can simply run:
+You can easily customize the scripts to better fit your specific needs. It's encouraged to open them in **VS Code** and modify parameters such as velocity thresholds, key bindings, or the number of tracks generated. To open the code in VS Code, you can simply run the following script using the "ReaScript: Run ReaScript" command in Reaper.
 
 ```bash
-python 1_enable_distAPI.py
+1_enable_distAPI.py
 ```
 
 This will open the project folder in **VS Code**, allowing you to make any adjustments you need.
