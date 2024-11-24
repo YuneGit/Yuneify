@@ -118,13 +118,15 @@ This script increases the velocity of all MIDI notes with velocities below 10 by
 ### 5. **`auto_open_plugin.py`**
 This script monitors the `Alt` key press and automatically opens the floating FX window for the selected track when the key is pressed, helping you manage your effects more efficiently.
 
-
 ## How to Use
+
+### Prerequisite: Install Dependencies
+Before starting, ensure you've completed the steps in the **Installation** section to install all required dependencies and set up your environment. This includes setting up Python libraries, (optionally) configuring the OpenAI API key, and enabling Python for REAPER's ReaScript functionality.
 
 ### 1. **Set Up REAPER** 
 - Install **REAPER** and the **SWS/S&M extension**.
 - Open your REAPER project.
-- Go to Preferences - Plug-ins - Reascript and set Enable Python for use with Reascript and force reascript to use specific Python dll (e.g. python312.dll)
+- Go to Preferences - Plug-ins - Reascript and set **Enable Python for use with Reascript** and force ReaScript to use a specific Python DLL (e.g., `python312.dll`).
 
 ### 2. **Run Yuneify.py**
 Just run **`Yuneify.py`** to get started! This will open **VS Code** in the script folder and give you access to the UI for running all other scripts. 
@@ -156,4 +158,4 @@ You can customize the scripts to fit your specific needs. Simply open them in **
 
 ## License
 
-This project is licensed under the **GNU General Public License**. See the [LICENSE](LICENSE) file for more details.
+This project is licensed under the **MIT License** with a **Commons Clause**. See the [LICENSE](LICENSE) file for more details.
