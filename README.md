@@ -1,3 +1,7 @@
+Here’s the updated README reflecting that the code can now be run outside of REAPER and in your code IDE:
+
+---
+
 # REAPER MIDI and FX Control Scripts
 
 This project includes a collection of Python scripts for **REAPER**, a popular digital audio workstation (DAW), that automates several tasks related to MIDI manipulation, plugin management, and track creation using REAPER's API and GPT-powered suggestions. 
@@ -26,7 +30,7 @@ To install the required Python dependencies for this project, simply use the `re
 Clone the repository to your local machine:
 
 ```bash
-git clone https://github.com/your-username/reaper-midi-fx-control.git
+git clone https://github.com/YuneGit/Reascript-Testing
 cd reaper-midi-fx-control
 ```
 
@@ -120,7 +124,7 @@ This script monitors the `Alt` key press and automatically opens the floating FX
 - Open your REAPER project.
 
 ### 2. **Enable Distant API**
-Run **`1_enable_distAPI.py`** to enable the REAPER distant API and open **VS Code** for easy code editing (VS Code is required for customization):
+You can now run **`1_enable_distAPI.py`** directly in your code IDE (like VS Code) to enable the REAPER distant API and open a UI that lets you toggle the scripts on and off. Ensure you have all dependencies installed for this feature to work.
 
 ```bash
 python 1_enable_distAPI.py
@@ -156,4 +160,3 @@ This will open the project folder in **VS Code**, allowing you to make any adjus
 ## License
 
 This project is licensed under the **GNU General Public License**. See the [LICENSE](LICENSE) file for more details.
-
