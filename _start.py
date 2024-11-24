@@ -16,38 +16,42 @@ class ScriptToggleApp(QMainWindow):
         self.processes = {}  # Store subprocesses for running scripts
 
         # Set up the main window
-        self.setWindowTitle("Python Script Toggle GUI")
-        self.setGeometry(200, 100, 600, 500)
+        self.setWindowTitle("Script Toggle")
+        self.setGeometry(200, 100, 400, 275)
 
-        # Set dark mode style
+        # Set dark mode style with sleeker UI
         self.setStyleSheet("""
             QMainWindow {
-                background-color: #2e2e2e;
+                background-color: #222222;
+                border-radius: 10px;
             }
             QLabel {
-                color: #ffffff;
-                font-size: 14px;
-                font-weight: bold;
+                color: #E0E0E0;
+                font-size: 16px;
+                font-weight: normal;
+                margin: 5px;
             }
             QPushButton {
-                background-color: #4a4a4a;
-                color: #ffffff;
-                border-radius: 5px;
-                padding: 8px 15px;
+                background-color: #444444;
+                color: #E0E0E0;
+                border-radius: 12px;
+                padding: 10px 20px;
                 font-size: 14px;
                 font-weight: bold;
+                transition: background-color 0.3s ease;
             }
             QPushButton:hover {
-                background-color: #5a5a5a;
+                background-color: #555555;
             }
             QPushButton:pressed {
-                background-color: #3a3a3a;
+                background-color: #333333;
             }
             QScrollArea {
-                background-color: #2e2e2e;
+                background-color: #222222;
             }
             QWidget {
-                background-color: #2e2e2e;
+                background-color: #222222;
+                border-radius: 10px;
             }
         """)
 
@@ -77,10 +81,11 @@ class ScriptToggleApp(QMainWindow):
     def load_scripts(self, layout):
         """Load Python scripts from the specified directory and create buttons."""
         for file_name in os.listdir(self.scripts_directory):
-            if file_name.endswith('.py') and file_name != os.path.basename(__file__):  # Exclude the launch script itself
+            # Exclude "Yuneify.py" and the launch script itself
+            if file_name.endswith('.py') and file_name != "Yuneify.py" and file_name != os.path.basename(__file__):  
                 script_path = os.path.join(self.scripts_directory, file_name)
 
-                # Create layout for each script
+                # Create layout for each script with sleek appearance
                 script_layout = QHBoxLayout()
                 script_label = QLabel(file_name)
                 toggle_button = QPushButton("Start")
@@ -94,7 +99,8 @@ class ScriptToggleApp(QMainWindow):
                 # Add elements to the script layout
                 script_layout.addWidget(script_label)
                 script_layout.addWidget(toggle_button)
-                
+                script_layout.setSpacing(10)
+
                 # Add the script layout to the main layout
                 layout.addLayout(script_layout)
 
