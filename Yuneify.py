@@ -2,9 +2,7 @@ import reapy
 import os
 import sys
 import subprocess
-import json
-
-CONFIG_FILE = "reaper_script_config.json"
+import psutil  # Import psutil to check running processes
 
 def enable_api():
     """
@@ -20,24 +18,6 @@ def enable_api():
 def show_reaper_message(message, title="Information", box_type="ok"):
     """Show a message box in REAPER."""
     return reapy.core.reaper.reaper.show_message_box(text=message, title=title, type=box_type)
-
-def load_config():
-    """Load configuration from a JSON file."""
-    if os.path.exists(CONFIG_FILE):
-        try:
-            with open(CONFIG_FILE, "r") as f:
-                return json.load(f)
-        except Exception as e:
-            show_reaper_message(f"Failed to load config file: {e}", "Error", "ok")
-    return {}
-
-def save_config(config):
-    """Save configuration to a JSON file."""
-    try:
-        with open(CONFIG_FILE, "w") as f:
-            json.dump(config, f, indent=4)
-    except Exception as e:
-        show_reaper_message(f"Failed to save config file: {e}", "Error", "ok")
 
 def locate_script_folder():
     """Locate the folder of this script."""
@@ -56,22 +36,11 @@ def check_start_script(script_folder):
         sys.exit("Exiting: '_start.py' is missing.")
     return start_script
 
-def locate_reaper_scripts_folder():
-    """Locate the REAPER Scripts folder dynamically."""
-    appdata = os.getenv("APPDATA")
-    if appdata:
-        reaper_folder = os.path.join(appdata, "REAPER", "Scripts")
-        if os.path.exists(reaper_folder):
-            return reaper_folder
-    show_reaper_message("Could not locate REAPER Scripts folder. Please provide the path manually.", "Folder Not Found", "ok")
-    return prompt_for_folder("Enter the full path to your REAPER Scripts folder")
-
 def locate_vscode(default_path):
-    """Locate Visual Studio Code or prompt the user for its path."""
+    """Locate Visual Studio Code or return None if it's not found."""
     if os.path.exists(default_path):
         return default_path
-    show_reaper_message("VS Code not found at the default location.", "VS Code Missing", "ok")
-    return prompt_for_folder("Enter the full path to your VS Code executable (or press Enter to exit)")
+    return None  # Return None if VS Code is not found at the default path
 
 def open_vscode(vscode_path, folder):
     """Open VS Code in the specified folder."""
@@ -82,6 +51,16 @@ def open_vscode(vscode_path, folder):
     except Exception as e:
         show_reaper_message(f"Could not open VS Code: {e}", "Error", "ok")
         return False
+
+def is_vscode_running():
+    """Check if VS Code is already running."""
+    for proc in psutil.process_iter(attrs=['name']):
+        try:
+            if proc.info['name'] == "Code.exe":
+                return True
+        except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
+            pass
+    return False
 
 def run_script(script):
     """Run the specified Python script."""
@@ -98,15 +77,23 @@ def main():
 
     script_folder = locate_script_folder()  # Automatically determine the folder where the script resides
     start_script = check_start_script(script_folder)  # Verify that _start.py exists in the folder
-    reaper_scripts_folder = locate_reaper_scripts_folder()
 
     default_code_path = "C:\\Program Files\\Microsoft VS Code\\Code.exe"
     vscode_path = locate_vscode(default_code_path)
 
-    if vscode_path and open_vscode(vscode_path, reaper_scripts_folder):
-        run_script(start_script)
+    # Check if VS Code is installed and not running already
+    if vscode_path:
+        if not is_vscode_running():  # Check if VS Code is not running
+            if open_vscode(vscode_path, script_folder):  # Open VS Code in the script folder
+                run_script(start_script)
+            else:
+                sys.exit("Exiting: Failed to open VS Code or run script.")
+        else:
+            show_reaper_message("Visual Studio Code is already running, skipping launch.", "VS Code Already Running", "ok")
+            run_script(start_script)
     else:
-        sys.exit("Exiting: Failed to open VS Code or run script.")
+        # If VS Code is not found, skip the opening process silently
+        run_script(start_script)
 
 if __name__ == "__main__":
     main()
