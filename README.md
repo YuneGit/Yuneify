@@ -78,7 +78,12 @@ Once the API key is set, your scripts will automatically use it to make requests
 
 ## Scripts
 
-### 1. **`AI_plugin_suggest.py`**
+### 1. **`Yuneify.py`**
+By running **`Yuneify.py`**, you can:
+- Open **VS Code** directly in the script folder, making it easy to edit and customize the scripts to fit your specific needs.
+- Launch a user-friendly **UI** that allows you to run any of the other scripts with just a few clicks, providing seamless control over your REAPER setup.
+
+### 2. **`AI_plugin_suggest.py`**
 This script uses GPT to suggest new tracks in REAPER, based on the available VST plugins and Kontakt libraries you have. It takes a user-provided prompt (such as "Cinematic Masterpiece") and generates suggestions on which plugins to use in new tracks.
 
 #### Key Features:
@@ -93,7 +98,7 @@ This script uses GPT to suggest new tracks in REAPER, based on the available VST
 - **Step 3**: GPT generates track suggestions based on your input and available libraries.
 - **Step 4**: The script creates tracks in REAPER with the suggested VST plugins or Kontakt libraries.
 
-### 2. **`auto_midi_gpt.py`**
+### 3. **`auto_midi_gpt.py`**
 This script orchestrates MIDI notes in REAPER using GPT. It transposes and arranges your MIDI notes into wider voicings with a focus on open, lush arrangements.
 
 #### Key Features:
@@ -107,16 +112,12 @@ This script orchestrates MIDI notes in REAPER using GPT. It transposes and arran
 - **Step 3**: GPT processes the notes and provides a new orchestration.
 - **Step 4**: The script then imports the orchestrated notes back into REAPER and places them in the active track.
 
-### 3. **`auto_midi_vel+10.py`**
+### 4. **`auto_midi_vel+10.py`**
 This script increases the velocity of all MIDI notes with velocities below 10 by +10. This is useful for creating more dynamic and consistent MIDI items by avoiding low-velocity notes.
 
-### 4. **`auto_open_plugin.py`**
+### 5. **`auto_open_plugin.py`**
 This script monitors the `Alt` key press and automatically opens the floating FX window for the selected track when the key is pressed, helping you manage your effects more efficiently.
 
-### 5. **`Yuneify.py`**
-By running **`Yuneify.py`**, you can:
-- Open **VS Code** directly in the script folder, making it easy to edit and customize the scripts to fit your specific needs.
-- Launch a user-friendly **UI** that allows you to run any of the other scripts with just a few clicks, providing seamless control over your REAPER setup.
 
 ## How to Use
 
