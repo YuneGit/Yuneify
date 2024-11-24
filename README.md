@@ -39,7 +39,7 @@ pip install -r requirements.txt
 
 This will install the necessary Python libraries, including `reapy`, `openai`, `pydantic`, and `keyboard`.
 
-### How to Get an OpenAI API Key and Set It Using `setx`
+### How to Get an OpenAI API Key and Set It Using `setx` (optional but required for AI use)
 
 To interact with OpenAI's API, you'll need an API key. Here's how to obtain and set it:
 
