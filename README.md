@@ -1,7 +1,3 @@
-Here’s the updated README reflecting that the code can now be run outside of REAPER and in your code IDE:
-
----
-
 # REAPER MIDI and FX Control Scripts
 
 This project includes a collection of Python scripts for **REAPER**, a popular digital audio workstation (DAW), that automates several tasks related to MIDI manipulation, plugin management, and track creation using REAPER's API and GPT-powered suggestions. 
