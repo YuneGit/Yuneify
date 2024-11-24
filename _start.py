@@ -82,7 +82,7 @@ class ScriptToggleApp(QMainWindow):
         """Load Python scripts from the specified directory and create buttons."""
         for file_name in os.listdir(self.scripts_directory):
             # Exclude "Yuneify.py" and the launch script itself
-            if file_name.endswith('.py') and file_name != "Yuneify.py" and file_name != os.path.basename(__file__):  
+            if file_name.endswith('.py') and file_name != "Yuneify.py" and file_name != "__init__.py" and file_name != os.path.basename(__file__):  
                 script_path = os.path.join(self.scripts_directory, file_name)
 
                 # Create layout for each script with sleek appearance

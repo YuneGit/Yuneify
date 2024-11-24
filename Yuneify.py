@@ -39,42 +39,9 @@ def save_config(config):
     except Exception as e:
         show_reaper_message(f"Failed to save config file: {e}", "Error", "ok")
 
-def prompt_for_folder(prompt_message):
-    """Prompt the user to manually enter a folder path using REAPER's get_user_inputs."""
-    try:
-        result = reapy.core.reaper.reaper.get_user_inputs(
-            "Folder Path Input",  # Title of the popup
-            [prompt_message],  # Captions for the input fields
-        )
-        
-        if not result:
-            raise RuntimeError("User canceled the input prompt.")
-        
-        folder_path = result.get(prompt_message, "").strip()
-        if os.path.exists(folder_path):
-            return folder_path
-        else:
-            show_reaper_message("Invalid folder path. Please ensure it exists and try again.", "Error", "ok")
-            sys.exit("Exiting: Folder not found.")
-    
-    except RuntimeError as e:
-        show_reaper_message(str(e), "Input Canceled", "ok")
-        sys.exit("Exiting: User canceled input.")
-
 def locate_script_folder():
-    """Locate the folder of this script, prompting if necessary."""
-    config = load_config()
-    if "script_folder" in config and os.path.exists(config["script_folder"]):
-        return config["script_folder"]
-
-    folder_path = prompt_for_folder(
-        "Could not locate the script folder. Please enter the full path to this script's directory."
-    )
-
-    config["script_folder"] = folder_path
-    save_config(config)
-
-    return folder_path
+    """Locate the folder of this script."""
+    return os.path.dirname(os.path.abspath(__file__))
 
 def check_start_script(script_folder):
     """Ensure _start.py is in the specified folder."""
@@ -93,7 +60,6 @@ def locate_reaper_scripts_folder():
     """Locate the REAPER Scripts folder dynamically."""
     appdata = os.getenv("APPDATA")
     if appdata:
-        print(appdata)
         reaper_folder = os.path.join(appdata, "REAPER", "Scripts")
         if os.path.exists(reaper_folder):
             return reaper_folder
@@ -130,8 +96,8 @@ def main():
     """Main execution."""
     enable_api()  # Call to configure REAPER
 
-    script_folder = locate_script_folder()
-    start_script = check_start_script(script_folder)
+    script_folder = locate_script_folder()  # Automatically determine the folder where the script resides
+    start_script = check_start_script(script_folder)  # Verify that _start.py exists in the folder
     reaper_scripts_folder = locate_reaper_scripts_folder()
 
     default_code_path = "C:\\Program Files\\Microsoft VS Code\\Code.exe"
