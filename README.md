@@ -124,9 +124,10 @@ This script monitors the `Alt` key press and automatically opens the floating FX
 ### 1. **Set Up REAPER** 
 - Install **REAPER** and the **SWS/S&M extension**.
 - Open your REAPER project.
+- Go to Preferences - Plug-ins - Reascript and set Enable Python for use with Reascript and force reascript to use specific Python dll (e.g. python312.dll)
 
-### 2. **Enable Distant API**
-To enable the REAPER distant API and customize your scripts, run **`Yuneify.py`**. This will open **VS Code** in the script folder and give you access to the UI for running all scripts. 
+### 2. **Run Yuneify.py**
+Just run **`Yuneify.py`** to get started! This will open **VS Code** in the script folder and give you access to the UI for running all other scripts. 
 
 ```bash
 python Yuneify.py
