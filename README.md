@@ -1,6 +1,6 @@
 # REAPER MIDI and FX Control Scripts
 
-This project includes a collection of Python scripts for **REAPER**, a popular digital audio workstation (DAW), that automates several tasks related to MIDI manipulation, plugin management, and track creation using REAPER's API and GPT-powered suggestions. 
+This project includes a collection of Python scripts for **REAPER**, a popular digital audio workstation (DAW), that automates several tasks related to MIDI manipulation, plugin management, and track creation using REAPER's API and GPT-powered suggestions.
 
 These scripts are designed to be used with **REAPER's distant API**, which allows control of REAPER remotely from Python.
 
@@ -113,6 +113,11 @@ This script increases the velocity of all MIDI notes with velocities below 10 by
 ### 4. **`auto_open_plugin.py`**
 This script monitors the `Alt` key press and automatically opens the floating FX window for the selected track when the key is pressed, helping you manage your effects more efficiently.
 
+### 5. **`Yuneify.py`**
+By running **`Yuneify.py`**, you can:
+- Open **VS Code** directly in the script folder, making it easy to edit and customize the scripts to fit your specific needs.
+- Launch a user-friendly **UI** that allows you to run any of the other scripts with just a few clicks, providing seamless control over your REAPER setup.
+
 ## How to Use
 
 ### 1. **Set Up REAPER** 
@@ -120,10 +125,10 @@ This script monitors the `Alt` key press and automatically opens the floating FX
 - Open your REAPER project.
 
 ### 2. **Enable Distant API**
-You can now run **`1_enable_distAPI.py`** directly in your code IDE (like VS Code) to enable the REAPER distant API and open a UI that lets you toggle the scripts on and off. Ensure you have all dependencies installed for this feature to work.
+To enable the REAPER distant API and customize your scripts, run **`Yuneify.py`**. This will open **VS Code** in the script folder and give you access to the UI for running all scripts. 
 
 ```bash
-python 1_enable_distAPI.py
+python Yuneify.py
 ```
 
 ### 3. **Run Scripts**
@@ -145,13 +150,7 @@ python 1_enable_distAPI.py
   ```
 
 ### 4. **Customizing the Scripts**
-Customization of the scripts is required to fit your specific needs. Open the scripts in **VS Code**, which is the recommended environment for editing, and modify parameters such as velocity thresholds, key bindings, or the number of tracks generated. You can easily open them in **VS Code** by running the following script using the "ReaScript: Run ReaScript" command in REAPER:
-
-```bash
-1_enable_distAPI.py
-```
-
-This will open the project folder in **VS Code**, allowing you to make any adjustments you need.
+You can customize the scripts to fit your specific needs. Simply open them in **VS Code** by running **`Yuneify.py`**. This will automatically open the project folder, allowing you to adjust parameters such as velocity thresholds, key bindings, and the number of tracks generated.
 
 ## License
 
