@@ -1,5 +1,3 @@
----
-
 # REAPER MIDI and FX Control Scripts
 
 This project includes a collection of Python scripts for **REAPER**, a popular digital audio workstation (DAW), that automates several tasks related to MIDI manipulation, plugin management, and track creation using REAPER's API and GPT-powered suggestions. 
@@ -20,11 +18,26 @@ These scripts are designed to be used with **REAPER's distant API**, which allow
 - **VS Code** (or any other IDE) is required for editing and customizing the scripts. It ensures compatibility with the REAPER API and allows for easy management of Python files.
 - The **SWS/S&M extension** for REAPER to enable the action for floating FX window functionality.
 
-You can install the necessary Python dependencies with:
+## Installation
+
+To install the required Python dependencies for this project, simply use the `requirements.txt` file included in the repository. This file lists all necessary packages for running the scripts.
+
+### Step 1: Clone the repository
+Clone the repository to your local machine:
 
 ```bash
-pip install reapy openai pydantic keyboard
+git clone https://github.com/your-username/reaper-midi-fx-control.git
+cd reaper-midi-fx-control
 ```
+
+### Step 2: Install dependencies using `requirements.txt`
+Once you have the repository cloned, navigate to the project folder and install the dependencies listed in `requirements.txt`:
+
+```bash
+pip install -r requirements.txt
+```
+
+This will install the necessary Python libraries, including `reapy`, `openai`, `pydantic`, and `keyboard`.
 
 ### How to Get an OpenAI API Key and Set It Using `setx`
 
@@ -144,6 +157,3 @@ This will open the project folder in **VS Code**, allowing you to make any adjus
 
 This project is licensed under the **GNU General Public License**. See the [LICENSE](LICENSE) file for more details.
 
----
-
-Feel free to open issues or contribute to the project if you find bugs or have suggestions for improvements!
