@@ -135,7 +135,7 @@ Just run **`Yuneify.py`** to get started! This will open **VS Code** in the scri
 python Yuneify.py
 ```
 
-### 3. **Run Scripts**
+### 3. **Run Scripts** (optional)
 - **Run `auto_midi_vel+10.py`** to adjust MIDI velocities automatically:
   ```bash
   python auto_midi_vel+10.py
