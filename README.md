@@ -26,8 +26,8 @@ To install the required Python dependencies for this project, simply use the `re
 Clone the repository to your local machine:
 
 ```bash
-git clone https://github.com/YuneGit/Reascript-Testing
-cd reaper-midi-fx-control
+git clone https://github.com/YuneGit/Yuneify
+cd Yuneify
 ```
 
 ### Step 2: Install dependencies using `requirements.txt`
