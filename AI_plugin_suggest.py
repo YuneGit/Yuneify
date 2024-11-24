@@ -1,4 +1,5 @@
-# Import necessary modules and dependencies
+import os
+import json
 from openai import OpenAI  # Import OpenAI module for interacting with the GPT API
 import reapy  # ReaScript API for interacting with the REAPER digital audio workstation
 from dependencies.list_Kontakt_VST import get_folder_names  # Import function to get folder names for Kontakt libraries
@@ -10,20 +11,29 @@ import re  # Import Python's regular expression library
 # Initialize the OpenAI client
 client = OpenAI()
 
+CONFIG_FOLDER = "config files"
+# File to store the Kontakt library path
+KONTAKT_LIBRARY_FILE = os.path.join(CONFIG_FOLDER, "kontakt_library_path.json")
+
+# Function to load the saved Kontakt library path from a file
+def load_kontakt_library_path():
+    if os.path.exists(KONTAKT_LIBRARY_FILE):
+        with open(KONTAKT_LIBRARY_FILE, 'r') as file:
+            return json.load(file).get("kontakt_library_path", "")
+    return ""
+
+# Function to save the Kontakt library path to a file in the config folder
+def save_kontakt_library_path(kontakt_library_path):
+    # Ensure the "config files" folder exists
+    os.makedirs(CONFIG_FOLDER, exist_ok=True)
+    
+    with open(KONTAKT_LIBRARY_FILE, 'w') as file:
+        json.dump({"kontakt_library_path": kontakt_library_path}, file)
 # Function to generate track suggestions using GPT based on user input and available plugins/libraries
 def get_gpt_suggestions(user_prompt, vst_plugins, kontakt_folders, num_tracks=3):
     """
     Generate suggestions for new tracks using GPT based on a user prompt,
     a list of available VST plugins, and Kontakt libraries.
-
-    Args:
-        user_prompt (str): Description or theme for composing music.
-        vst_plugins (list): List of available VST plugins.
-        kontakt_folders (list): List of available Kontakt library folders.
-        num_tracks (int): Number of track suggestions to generate.
-
-    Returns:
-        str: GPT-generated suggestions for new tracks.
     """
     
     # Construct a combined prompt with the user input and available libraries
@@ -47,7 +57,7 @@ def get_gpt_suggestions(user_prompt, vst_plugins, kontakt_folders, num_tracks=3)
     completion = client.chat.completions.create(
         model="gpt-4o-mini",  # Specify the model to use
         messages=[
-            {"role": "system", "content": "No markdown."},
+            {"role": "system", "content": "No markdown. Follow the exact prompt format."},
             {"role": "user", "content": combined_prompt}
         ]
     )
@@ -59,10 +69,6 @@ def get_gpt_suggestions(user_prompt, vst_plugins, kontakt_folders, num_tracks=3)
 def create_new_kontakt_track(track_name=None, index=0):
     """
     Create a new track in REAPER using a Kontakt library.
-
-    Args:
-        track_name (str): Name of the Kontakt library to use.
-        index (int): Index of the track in the REAPER project.
     """
     add_track_with_kontakt(reapy.Project(), track_name, index)
 
@@ -70,9 +76,6 @@ def create_new_kontakt_track(track_name=None, index=0):
 def create_new_track(plugin_name=None):
     """
     Create a new track in REAPER using a standard VST plugin.
-
-    Args:
-        plugin_name (str): Name of the VST plugin to use.
     """
     insert_Track.main(plugin_name)
 
@@ -86,8 +89,22 @@ def main():
     4. Create tracks in REAPER based on the suggestions.
     """
     
-    # Path to the Kontakt library folder
-    kontakt_library_path = "D:\\SynthContent"
+    # Try loading the saved Kontakt library path
+    kontakt_library_path = load_kontakt_library_path()
+    
+    if not kontakt_library_path:
+        # If no path is found, prompt the user for input
+        title = "Enter Kontakt Library Path"
+        captions = ["Kontakt Library Path"]
+        user_inputs = reapy.core.reaper.reaper.get_user_inputs(title, captions)
+
+        kontakt_library_path = user_inputs.get("Kontakt Library Path", "")
+        if not kontakt_library_path:
+            print("Error: No Kontakt library path provided. Exiting...")
+            return
+        
+        # Save the new path for future use
+        save_kontakt_library_path(kontakt_library_path)
 
     # Get a list of Kontakt library folder names
     kontakt_folders = get_folder_names(kontakt_library_path)
