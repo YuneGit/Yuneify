@@ -19,39 +19,34 @@ class ScriptToggleApp(QMainWindow):
         self.setWindowTitle("Script Toggle")
         self.setGeometry(200, 100, 400, 275)
 
-        # Set dark mode style with sleeker UI
+        # Apply modern dark mode style
         self.setStyleSheet("""
-            QMainWindow {
-                background-color: #222222;
+            QMainWindow, QWidget {
+                background-color: #1E1E1E;
+                color: #FFFFFF;
                 border-radius: 10px;
             }
             QLabel {
-                color: #E0E0E0;
+                color: #FFFFFF;
                 font-size: 16px;
-                font-weight: normal;
                 margin: 5px;
             }
             QPushButton {
-                background-color: #444444;
-                color: #E0E0E0;
+                background-color: #3A3A3A;
+                color: #FFFFFF;
                 border-radius: 12px;
-                padding: 10px 20px;
+                padding: 8px 16px;
                 font-size: 14px;
-                font-weight: bold;
-                transition: background-color 0.3s ease;
+                border: 1px solid #5A5A5A;
             }
             QPushButton:hover {
-                background-color: #555555;
+                background-color: #4A4A4A;
             }
             QPushButton:pressed {
-                background-color: #333333;
+                background-color: #2A2A2A;
             }
             QScrollArea {
-                background-color: #222222;
-            }
-            QWidget {
-                background-color: #222222;
-                border-radius: 10px;
+                background-color: #1E1E1E;
             }
         """)
 
