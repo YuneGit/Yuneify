@@ -9,6 +9,8 @@ from dependencies.insert_Kontakt_Track import add_track_with_kontakt
 from dependencies import insert_Track
 import tkinter as tk
 from tkinter import messagebox
+from PyQt5 import QtWidgets
+import sys
 
 # Initialize the OpenAI client
 client = OpenAI()
@@ -110,61 +112,57 @@ def create_tracks(selected_suggestions):
         else:
             print("Error: One of the required variables is not assigned. Please check the suggestions.")
 
+class PluginSuggestionApp(QtWidgets.QWidget):
+    def __init__(self):
+        super().__init__()
+        self.init_ui()
+
+    def init_ui(self):
+        self.setWindowTitle("Plugin Suggestion Suite")
+        
+        # Create layout
+        layout = QtWidgets.QVBoxLayout()
+
+        # Create input fields
+        self.prompt_input = QtWidgets.QLineEdit(self)
+        self.prompt_input.setPlaceholderText("Enter your composition theme...")
+
+        self.num_tracks_input = QtWidgets.QSpinBox(self)
+        self.num_tracks_input.setRange(1, 10)
+        self.num_tracks_input.setValue(3)
+
+        # Create buttons
+        self.submit_button = QtWidgets.QPushButton("Get Suggestions", self)
+        self.submit_button.clicked.connect(self.get_suggestions)
+
+        # Add widgets to layout
+        layout.addWidget(QtWidgets.QLabel("User Prompt:"))
+        layout.addWidget(self.prompt_input)
+        layout.addWidget(QtWidgets.QLabel("Number of Tracks:"))
+        layout.addWidget(self.num_tracks_input)
+        layout.addWidget(self.submit_button)
+
+        # Set layout
+        self.setLayout(layout)
+
+    def get_suggestions(self):
+        user_prompt = self.prompt_input.text()
+        num_tracks = self.num_tracks_input.value()
+        
+        # Call the existing function to get suggestions
+        kontakt_folders = get_folder_names(load_kontakt_library_path())
+        vst_plugins = get_vst_plugins()
+        suggestions = get_gpt_suggestions(user_prompt, vst_plugins, kontakt_folders, num_tracks=num_tracks)
+        
+        # Display suggestions
+        QtWidgets.QMessageBox.information(self, "Suggestions", suggestions)
+
 def main():
     """Main function to orchestrate the track creation workflow."""
-    kontakt_library_path = load_kontakt_library_path()
-    
-    if not kontakt_library_path:
-        title = "Enter Kontakt Library Path"
-        captions = ["Kontakt Library Path"]
-        user_inputs = reapy.core.reaper.reaper.get_user_inputs(title, captions)
-
-        kontakt_library_path = user_inputs.get("Kontakt Library Path", "")
-        if not kontakt_library_path:
-            print("Error: No Kontakt library path provided. Exiting...")
-            return
-        
-        save_kontakt_library_path(kontakt_library_path)
-
-    kontakt_folders = get_folder_names(kontakt_library_path)
-    vst_plugins = get_vst_plugins()
-
-    print("Kontakt Libraries:")
-    for folder in kontakt_folders:
-        print(folder)
-
-    print("\nVST Plugins:")
-    for plugin in vst_plugins:
-        print(f"{plugin[0]} - {plugin[1]}")
-
-    title = "Track Creation"
-    captions = ["Number of Tracks", "User Prompt"]
-    user_inputs = reapy.core.reaper.reaper.get_user_inputs(title, captions)
-
-    num_tracks = int(user_inputs.get("Number of Tracks", 3))
-    user_prompt = user_inputs.get("User Prompt", "Cinematic Masterpiece.")
-
-    suggestions = get_gpt_suggestions(user_prompt, vst_plugins, kontakt_folders, num_tracks=num_tracks)
-    print("\nGPT Suggestions:")
-    print(suggestions)
-
-    lines = suggestions.splitlines()
-    track_suggestions = []
-
-    for line in lines:
-        line = line.strip()
-        if "VST Plugin:" in line:
-            plugin_name = line.split(": ")[1].strip()
-            print(f"Assigned VST Plugin: {plugin_name}")
-        elif "Kontakt Library:" in line:
-            kontakt_library = line.split(": ")[1].strip()
-            print(f"Assigned Kontakt Library: {kontakt_library}")
-
-            if 'plugin_name' in locals() and 'kontakt_library' in locals():
-                track_suggestions.append({"plugin": plugin_name, "library": kontakt_library})
-
-    # Show UI for user to select suggestions
-    show_suggestions_ui(track_suggestions)
+    app = QtWidgets.QApplication(sys.argv)
+    window = PluginSuggestionApp()
+    window.show()
+    sys.exit(app.exec_())
 
 if __name__ == "__main__":
     main()

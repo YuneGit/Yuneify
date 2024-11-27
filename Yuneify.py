@@ -3,6 +3,7 @@ import os
 import sys
 import subprocess
 import psutil  # Import psutil to check running processes
+from PyQt5.QtWidgets import QApplication, QMessageBox
 
 def enable_api():
     """
@@ -15,9 +16,15 @@ def enable_api():
     except Exception as e:
         print(f"Failed to enable distant API: {e}")
 
-def show_reaper_message(message, title="Information", box_type="ok"):
-    """Show a message box in REAPER."""
-    return reapy.core.reaper.reaper.show_message_box(text=message, title=title, type=box_type)
+def show_pyqt_message(message, title="Information", box_type=QMessageBox.Information):
+    """Show a message box using PyQt5."""
+    app = QApplication.instance() or QApplication(sys.argv)
+    msg_box = QMessageBox()
+    msg_box.setIcon(box_type)
+    msg_box.setText(message)
+    msg_box.setWindowTitle(title)
+    msg_box.setStandardButtons(QMessageBox.Ok)
+    msg_box.exec_()
 
 def locate_script_folder():
     """Locate the folder of this script."""
@@ -27,11 +34,11 @@ def check_start_script(script_folder):
     """Ensure _start.py is in the specified folder."""
     start_script = os.path.join(script_folder, "_start.py")
     if not os.path.exists(start_script):
-        show_reaper_message(
+        show_pyqt_message(
             f"The required '_start.py' script is missing in the folder:\n{script_folder}\n\n"
             "Please ensure '_start.py' is located in the same folder as this script.",
             "Missing Script",
-            "ok",
+            QMessageBox.Critical
         )
         sys.exit("Exiting: '_start.py' is missing.")
     return start_script
@@ -46,10 +53,10 @@ def open_vscode(vscode_path, folder):
     """Open VS Code in the specified folder."""
     try:
         subprocess.Popen([vscode_path, folder])
-        show_reaper_message(f"Visual Studio Code opened successfully in folder:\n{folder}", "VS Code Opened", "ok")
+        show_pyqt_message(f"Visual Studio Code opened successfully in folder:\n{folder}", "VS Code Opened", QMessageBox.Information)
         return True
     except Exception as e:
-        show_reaper_message(f"Could not open VS Code: {e}", "Error", "ok")
+        show_pyqt_message(f"Could not open VS Code: {e}", "Error", QMessageBox.Critical)
         return False
 
 def is_vscode_running():
@@ -67,16 +74,15 @@ def run_script(script):
     try:
         script_dir = os.path.dirname(script)
         subprocess.Popen(["python", script], cwd=script_dir, creationflags=subprocess.CREATE_NO_WINDOW)
-        show_reaper_message(f"Running script: {os.path.basename(script)}", "Script Started", "ok")
+        show_pyqt_message(f"Running script: {os.path.basename(script)}", "Script Started", QMessageBox.Information)
     except Exception as e:
-        show_reaper_message(f"Failed to run {os.path.basename(script)}: {e}", "Script Error", "ok")
+        show_pyqt_message(f"Failed to run {os.path.basename(script)}: {e}", "Script Error", QMessageBox.Critical)
 
 def main():
     """Main execution."""
     enable_api()  # Call to configure REAPER
 
     script_folder = locate_script_folder()  # Automatically determine the folder where the script resides
-    start_script = check_start_script(script_folder)  # Verify that _start.py exists in the folder
 
     default_code_path = "C:\\Program Files\\Microsoft VS Code\\Code.exe"
     vscode_path = locate_vscode(default_code_path)
@@ -84,16 +90,12 @@ def main():
     # Check if VS Code is installed and not running already
     if vscode_path:
         if not is_vscode_running():  # Check if VS Code is not running
-            if open_vscode(vscode_path, script_folder):  # Open VS Code in the script folder
-                run_script(start_script)
-            else:
-                sys.exit("Exiting: Failed to open VS Code or run script.")
+            open_vscode(vscode_path, script_folder)  # Open VS Code in the script folder
         else:
-            show_reaper_message("Visual Studio Code is already running, skipping launch.", "VS Code Already Running", "ok")
-            run_script(start_script)
-    else:
-        # If VS Code is not found, skip the opening process silently
-        run_script(start_script)
+            show_pyqt_message("Visual Studio Code is already running, skipping launch.", "VS Code Already Running", QMessageBox.Information)
+    # Launch the UI application
+    from UI import main as launch_ui
+    launch_ui()
 
 if __name__ == "__main__":
     main()
