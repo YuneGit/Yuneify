@@ -1,8 +1,14 @@
-# REAPER MIDI and FX Control Scripts
+# REAPER MIDI and FX Control
 
-This project includes a collection of Python scripts for **REAPER**, a popular digital audio workstation (DAW). These scripts automate various tasks related to MIDI manipulation, plugin management, and track creation using REAPER's API and GPT-powered suggestions.
+Yuneify is a project that improves and speeds up your workflow in **REAPER**. These scripts automate various tasks related to MIDI manipulation, plugin management, and track management using REAPER's API and GPT-powered suggestions. 
 
-The scripts are designed to work with **REAPER's distant API**, enabling remote control of REAPER from Python.
+The scripts are designed to work with **REAPER's distant API**, enabling remote control of REAPER from Python. Yuneify.py enables it and provides a UI to run the scripts.
+
+To enable the **REAPER's distant API** you can also run the following command in your terminal (make sure your terminal is open in the project directory)
+```bash
+pip install -r requirements.txt
+python -c "import reapy; reapy.configure_reaper()"
+```
 
 ---
 
@@ -139,7 +145,7 @@ Run the following command to launch the main script:
 python Yuneify.py
 ```
 
-This opens the project in **VS Code** and provides a UI for running other scripts.
+This script provides a UI for running other scripts and opens the Reaper Distance API so you can run scripts from your terminal.
 
 ---
 
