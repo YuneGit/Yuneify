@@ -1,4 +1,4 @@
-# REAPER MIDI and FX Control
+# Yuneify REAPER MIDI and FX Control Suite
 
 Yuneify is a project that improves and speeds up your workflow in **REAPER**. These scripts automate various tasks related to MIDI manipulation, plugin management, and track management using REAPER's API and GPT-powered suggestions. 
 
