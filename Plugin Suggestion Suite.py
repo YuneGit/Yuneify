@@ -7,6 +7,8 @@ from dependencies.list_Kontakt_VST import get_folder_names
 from dependencies.list_VST import get_vst_plugins
 from dependencies.insert_Kontakt_Track import add_track_with_kontakt
 from dependencies import insert_Track
+import tkinter as tk
+from tkinter import messagebox
 
 # Initialize the OpenAI client
 client = OpenAI()
@@ -64,6 +66,50 @@ def create_new_track(plugin_name=None):
     """Create a new track in REAPER using a standard VST plugin."""
     insert_Track.main(plugin_name)
 
+def show_suggestions_ui(track_suggestions):
+    """Display a UI for the user to select which suggestions to use."""
+    def on_submit():
+        selected_suggestions = [
+            suggestion for var, suggestion in zip(checkbox_vars, track_suggestions) if var.get()
+        ]
+        if not selected_suggestions:
+            messagebox.showwarning("No Selection", "No suggestions selected. Exiting...")
+            root.destroy()
+            return
+        root.destroy()
+        create_tracks(selected_suggestions)
+
+    root = tk.Tk()
+    root.title("Select Track Suggestions")
+
+    checkbox_vars = []
+    for i, suggestion in enumerate(track_suggestions):
+        var = tk.BooleanVar()
+        checkbox_vars.append(var)
+        plugin_name = suggestion.get("plugin")
+        kontakt_library = suggestion.get("library")
+        label_text = f"Suggestion {i+1}: VST Plugin: {plugin_name}, Kontakt Library: {kontakt_library}"
+        tk.Checkbutton(root, text=label_text, variable=var).pack(anchor='w')
+
+    tk.Button(root, text="Submit", command=on_submit).pack()
+    root.mainloop()
+
+def create_tracks(selected_suggestions):
+    """Create tracks based on selected suggestions."""
+    for suggestion in selected_suggestions:
+        plugin_name = suggestion.get("plugin")
+        kontakt_library = suggestion.get("library")
+        
+        print(f"\nCreating track:")
+        print(f"VST Plugin: {plugin_name}")
+        print(f"Kontakt Library: {kontakt_library}")
+
+        if plugin_name and kontakt_library:
+            create_new_kontakt_track(track_name=kontakt_library)
+            create_new_track(plugin_name=plugin_name)
+        else:
+            print("Error: One of the required variables is not assigned. Please check the suggestions.")
+
 def main():
     """Main function to orchestrate the track creation workflow."""
     kontakt_library_path = load_kontakt_library_path()
@@ -117,19 +163,8 @@ def main():
             if 'plugin_name' in locals() and 'kontakt_library' in locals():
                 track_suggestions.append({"plugin": plugin_name, "library": kontakt_library})
 
-    for suggestion in track_suggestions:
-        plugin_name = suggestion.get("plugin")
-        kontakt_library = suggestion.get("library")
-        
-        print(f"\nCreating track:")
-        print(f"VST Plugin: {plugin_name}")
-        print(f"Kontakt Library: {kontakt_library}")
-
-        if plugin_name and kontakt_library:
-            create_new_kontakt_track(track_name=kontakt_library)
-            create_new_track(plugin_name=plugin_name)
-        else:
-            print("Error: One of the required variables is not assigned. Please check the suggestions.")
+    # Show UI for user to select suggestions
+    show_suggestions_ui(track_suggestions)
 
 if __name__ == "__main__":
     main()
