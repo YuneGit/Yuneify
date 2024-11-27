@@ -5,6 +5,9 @@ import openai  # Library for using OpenAI's API
 from pydantic import BaseModel  # Library for data validation and parsing
 from openai import OpenAI
 import json  # For working with JSON data
+import sys
+from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QVBoxLayout, QWidget, QFileDialog, QLabel, QTextEdit, QHBoxLayout, QComboBox
+from PyQt5.QtGui import QPainter, QColor
 
 # Define a Pydantic model to represent a MIDI note
 # This model enforces the structure of a MIDI note object
@@ -57,14 +60,14 @@ class MidiPitchTransposer:
         self.import_orchestrated_notes(take, orchestrated_notes)
 
     # Method to send MIDI notes to ChatGPT and get orchestrated notes
-    def send_notes_to_chatgpt(self, note_infos):
+    def send_notes_to_chatgpt(self, note_infos, style, key):
         """Send MIDI notes to ChatGPT for orchestration and return the response."""
         
         # Convert the list of note information to a JSON string for ChatGPT
         midi_data = json.dumps(note_infos, default=str)  # Convert to JSON string
-        style = (
-            "Pitches are notes. Orchestrate the notes. Avoid close-voicings and "
-            "focus on octaves and lush wide voicings. Determine the key based on the input. "
+        style_prompt = (
+            f"Pitches are notes. Orchestrate the notes in the style of {style} in the key of {key}. "
+            "Avoid close-voicings and focus on octaves and lush wide voicings. "
             "Do not use duplicate notes or pitches."
         )
         client = OpenAI()  # Initialize the OpenAI client
@@ -74,7 +77,7 @@ class MidiPitchTransposer:
             model="gpt-4o-mini",  # Specify the model to use
             messages=[
                 {"role": "system", "content": "You are a master orchestrator who chooses notes and pitches carefully."},
-                {"role": "user", "content": f"{style}:\n{midi_data}"},
+                {"role": "user", "content": f"{style_prompt}:\n{midi_data}"},
             ],
             response_format=MidiOrchestrationResponse,  # Specify the expected schema of the response
         )
@@ -124,3 +127,83 @@ def wait_for_stop_recording():
 # Entry point of the script
 if __name__ == "__main__":
     wait_for_stop_recording()  # Start monitoring for when recording stops
+
+class MidiAssistantApp(QMainWindow):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("Advanced AI MIDI Assistant")
+        self.setGeometry(100, 100, 800, 600)
+        self.main_widget = QWidget(self)
+        self.setCentralWidget(self.main_widget)
+        self.layout = QVBoxLayout(self.main_widget)
+        self.add_ui_elements()
+        self.midi_transposer = MidiPitchTransposer()
+        self.midi_notes = []
+
+    def add_ui_elements(self):
+        self.load_button = QPushButton("Load MIDI File", self)
+        self.load_button.clicked.connect(self.load_midi_file)
+        self.layout.addWidget(self.load_button)
+
+        self.style_combo = QComboBox(self)
+        self.style_combo.addItems(["Bach", "Beethoven", "Mozart", "Chopin", "Debussy"])
+        self.layout.addWidget(QLabel("Select Composer Style:"))
+        self.layout.addWidget(self.style_combo)
+
+        self.key_combo = QComboBox(self)
+        self.key_combo.addItems(["C Major", "G Major", "D Major", "A Minor", "E Minor"])
+        self.layout.addWidget(QLabel("Select Key:"))
+        self.layout.addWidget(self.key_combo)
+
+        self.send_button = QPushButton("Send to AI", self)
+        self.send_button.clicked.connect(self.send_to_ai)
+        self.layout.addWidget(self.send_button)
+
+        self.save_button = QPushButton("Save Orchestrated MIDI", self)
+        self.save_button.clicked.connect(self.save_midi_file)
+        self.layout.addWidget(self.save_button)
+
+        self.result_area = QTextEdit(self)
+        self.result_area.setReadOnly(True)
+        self.layout.addWidget(self.result_area)
+
+        self.status_label = QLabel("Status: Ready", self)
+        self.layout.addWidget(self.status_label)
+
+    def load_midi_file(self):
+        options = QFileDialog.Options()
+        file_name, _ = QFileDialog.getOpenFileName(self, "Open MIDI File", "", "MIDI Files (*.mid);;All Files (*)", options=options)
+        if file_name:
+            self.status_label.setText(f"Loaded: {file_name}")
+            self.midi_transposer.run()
+
+    def send_to_ai(self):
+        self.status_label.setText("Sending to AI...")
+        selected_style = self.style_combo.currentText()
+        selected_key = self.key_combo.currentText()
+        orchestrated_notes = self.midi_transposer.send_notes_to_chatgpt(self.midi_notes, selected_style, selected_key)
+        self.result_area.setText(str(orchestrated_notes))
+        self.status_label.setText("AI Orchestration Complete")
+
+    def save_midi_file(self):
+        options = QFileDialog.Options()
+        file_name, _ = QFileDialog.getSaveFileName(self, "Save Orchestrated MIDI", "", "MIDI Files (*.mid);;All Files (*)", options=options)
+        if file_name:
+            # Logic to save the orchestrated MIDI notes to a file
+            self.status_label.setText(f"Saved: {file_name}")
+
+    def paintEvent(self, event):
+        painter = QPainter(self)
+        painter.setPen(QColor(0, 0, 0))
+        # Example visualization logic
+        for note in self.midi_notes:
+            painter.drawRect(note.start * 10, note.pitch, 10, 10)
+
+def main():
+    app = QApplication(sys.argv)
+    window = MidiAssistantApp()
+    window.show()
+    sys.exit(app.exec_())
+
+if __name__ == "__main__":
+    main()

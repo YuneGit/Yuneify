@@ -52,7 +52,6 @@ class ScriptToggleApp(QMainWindow):
 
         # Main layout
         main_layout = QVBoxLayout()
-
         # Add a scroll area to handle a large number of scripts
         scroll_area = QScrollArea()
         scroll_widget = QWidget()
@@ -72,7 +71,6 @@ class ScriptToggleApp(QMainWindow):
         container = QWidget()
         container.setLayout(main_layout)
         self.setCentralWidget(container)
-
     def load_scripts(self, layout):
         """Load Python scripts from the specified directory and create buttons."""
         for file_name in os.listdir(self.scripts_directory):
@@ -98,7 +96,6 @@ class ScriptToggleApp(QMainWindow):
 
                 # Add the script layout to the main layout
                 layout.addLayout(script_layout)
-
     def toggle_script(self, script_path):
         """Start or stop the script based on its current state."""
         button = self.script_buttons[script_path]
@@ -123,7 +120,7 @@ class ScriptToggleApp(QMainWindow):
         """Override closeEvent to ensure all running scripts are terminated."""
         for process in self.processes.values():
             process.terminate()
-        super().closeEvent(event)
+
 
 
 if __name__ == "__main__":

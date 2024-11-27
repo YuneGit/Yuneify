@@ -3,6 +3,7 @@ from PyQt5.QtWidgets import (
     QApplication, QMainWindow, QVBoxLayout, QWidget, QPushButton, 
     QLabel, QComboBox, QListWidget, QHBoxLayout, QListWidgetItem
 )
+from PyQt5.QtCore import QTimer
 import reapy
 
 class TrackRouter(QMainWindow):
@@ -116,6 +117,11 @@ class TrackRouter(QMainWindow):
         # Initialize track lists
         self.refresh_tracks()
 
+        # Set up a timer to refresh tracks every few milliseconds
+        self.timer = QTimer(self)
+        self.timer.timeout.connect(self.refresh_tracks)
+        self.timer.start(500)  # Refresh every 500 milliseconds (adjust as needed)
+
     def refresh_tracks(self):
         """Refresh the lists of tracks and sends"""
         project = reapy.Project()
@@ -129,12 +135,21 @@ class TrackRouter(QMainWindow):
         for track in project.tracks:
             self.source_list.addItem(track.name)
             self.destination_combo.addItem(track.name)
-            
-            # Add existing sends to sends list
+        
+        # Group sends by destination track
+        sends_by_dest = {}
+        for track in project.tracks:
             for send in track.sends:
-                dest_track = project.tracks[send.destination]
-                send_text = f"{track.name} → {dest_track.name}"
-                self.sends_list.addItem(send_text)
+                dest_track = send.dest_track
+                if dest_track.name not in sends_by_dest:
+                    sends_by_dest[dest_track.name] = []
+                sends_by_dest[dest_track.name].append(track.name)
+        
+        # Add grouped sends to sends list
+        for dest_name, source_names in sends_by_dest.items():
+            self.sends_list.addItem(f"→ {dest_name}")
+            for source_name in source_names:
+                self.sends_list.addItem(f"    {source_name}")
 
     def create_send(self):
         """Create sends from selected source tracks to destination track"""
@@ -188,9 +203,9 @@ class TrackRouter(QMainWindow):
             if source_track:
                 # Remove all sends to the destination track
                 for send in source_track.sends:
-                    dest_track = project.tracks[send.destination]
+                    dest_track = send.dest_track
                     if dest_track.name == dest_name:
-                        source_track.remove_send(send)
+                        send.delete()
                         print(f"Removed send: {source_name} → {dest_name}")
         
         # Refresh the display
