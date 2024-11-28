@@ -30,16 +30,62 @@ class AIOrchestrationStyleSelector(QWidget):
         super().__init__()
         self.initUI()
         self.midi_orchestrator = AIMidiOrchestrator()  # Initialize orchestrator
-        self.project = reapy.Project()
-        self.was_recording = self.project.is_recording
-
-        # Set up a timer to check the recording status
-        self.timer = QTimer(self)
-        self.timer.timeout.connect(self.check_recording_status)
-        self.timer.start(500)  # Check every 500 milliseconds
 
     def initUI(self):
         self.setWindowTitle('Select Orchestration Style')
+        self.setFixedSize(275, 175)  # Set fixed size to 275x150
+
+        # Apply modern dark mode style
+        self.setStyleSheet("""
+            QWidget {
+                background-color: #1E1E1E;
+                color: #FFFFFF;
+                border-radius: 10px;
+            }
+            QLabel {
+                color: #FFFFFF;
+                font-size: 16px;
+                margin: 5px;
+            }
+            QPushButton {
+                background-color: #3A3A3A;
+                color: #FFFFFF;
+                border-radius: 12px;
+                padding: 3px 7px;
+                font-size: 14px;
+                border: 1px solid #5A5A5A;
+                min-width: 100px;
+                max-width: 100px;
+                min-height: 20px;
+                max-height: 20px;
+            }
+            QPushButton:hover {
+                background-color: #4A4A4A;
+            }
+            QPushButton:pressed {
+                background-color: #2A2A2A;
+            }
+            QComboBox {
+                background-color: #3A3A3A;
+                color: #FFFFFF;
+                border-radius: 3px;
+                padding: 3px;
+                border: 1px solid #5A5A5A;
+            }
+            QComboBox QAbstractItemView {
+                background-color: #2A2A2A;
+                color: #FFFFFF;
+                selection-background-color: #4A4A4A;
+            }
+            QLineEdit {
+                background-color: #2A2A2A;
+                color: #FFFFFF;
+                border-radius: 3px;
+                padding: 3px;
+                border: 1px solid #5A5A5A;
+            }
+        """)
+
         layout = QVBoxLayout()
 
         # Label
@@ -61,10 +107,10 @@ class AIOrchestrationStyleSelector(QWidget):
         self.prompt_input.setPlaceholderText('Add custom instructions for orchestration...')
         layout.addWidget(self.prompt_input)
 
-        # Button to confirm selection
-        self.select_button = QPushButton('Select', self)
-        self.select_button.clicked.connect(self.on_select)
-        layout.addWidget(self.select_button)
+        # Button to send notes to GPT
+        self.send_button = QPushButton('Send to GPT', self)
+        self.send_button.clicked.connect(self.on_send_to_gpt)
+        layout.addWidget(self.send_button)
 
         # Feedback label
         self.feedback_label = QLabel('', self)
@@ -72,7 +118,7 @@ class AIOrchestrationStyleSelector(QWidget):
 
         self.setLayout(layout)
 
-    def on_select(self):
+    def on_send_to_gpt(self):
         selected_style = self.style_combo.currentText()
         custom_instructions = self.prompt_input.text()
         print(f"Selected style: {selected_style}")
@@ -82,13 +128,6 @@ class AIOrchestrationStyleSelector(QWidget):
         self.midi_orchestrator.style = selected_style
         self.midi_orchestrator.custom_instructions = custom_instructions
         self.midi_orchestrator.run()
-
-    def check_recording_status(self):
-        is_recording = self.project.is_recording
-        if self.was_recording and not is_recording:
-            print("Recording stopped.")
-            self.on_select()  # Trigger orchestration
-        self.was_recording = is_recording
 
     def get_selected_style(self):
         return self.style_combo.currentText()

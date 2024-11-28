@@ -1,12 +1,12 @@
 import sys
-from PyQt5.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QWidget, QPushButton, QLabel, QComboBox
+from PyQt5.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QWidget, QPushButton, QLabel, QComboBox, QGridLayout
 import reapy
 
 class TrackControlApp(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Track Control")
-        self.setGeometry(200, 100, 300, 350)
+        self.setGeometry(100, 100, 275, 175)  # Fixed window size
 
         # Apply modern dark mode style
         self.setStyleSheet("""
@@ -18,13 +18,13 @@ class TrackControlApp(QMainWindow):
             QLabel {
                 color: #FFFFFF;
                 font-size: 16px;
-                margin: 5px;
+                margin: 3px;
             }
             QPushButton {
                 background-color: #3A3A3A;
                 color: #FFFFFF;
                 border-radius: 12px;
-                padding: 8px 16px;
+                padding: 4px 4px;
                 font-size: 14px;
                 border: 1px solid #5A5A5A;
             }
@@ -37,8 +37,8 @@ class TrackControlApp(QMainWindow):
             QComboBox {
                 background-color: #3A3A3A;
                 color: #FFFFFF;
-                border-radius: 5px;
-                padding: 5px;
+                border-radius: 3px;
+                padding: 2px;
                 border: 1px solid #5A5A5A;
             }
             QComboBox QAbstractItemView {
@@ -49,17 +49,26 @@ class TrackControlApp(QMainWindow):
         """)
 
         # Main layout
-        layout = QVBoxLayout()
+        layout = QGridLayout()
+        layout.setContentsMargins(8, 8, 8, 8)  # Set margins
+        layout.setSpacing(5)  # Set spacing between widgets
 
         # Add buttons for track control
         self.mute_button = QPushButton("Mute All Tracks")
-        self.unmute_button = QPushButton("Unmute All Tracks")
+        self.unmute_button = QPushButton("Un-Mute All Tracks")
         self.solo_button = QPushButton("Solo All Tracks")
-        self.unsolo_button = QPushButton("Unsolo All Tracks")
-        self.solo_group_button = QPushButton("Solo Selected Track Group")
-        self.unsolo_group_button = QPushButton("Unsolo Selected Track Group")
-        self.mute_group_button = QPushButton("Mute Selected Track Group")
-        self.unmute_group_button = QPushButton("Unmute Selected Track Group")
+        self.unsolo_button = QPushButton("Un-Solo All Tracks")
+        self.solo_group_button = QPushButton("Solo Group")
+        self.unsolo_group_button = QPushButton("Un-Solo Group")
+        self.mute_group_button = QPushButton("Mute Group")
+        self.unmute_group_button = QPushButton("Un-Mute Group")
+
+        # Set reduced button size to prevent window from resizing
+        button_width = 124  # Reduce the width from 130 to 124
+        button_height = 30
+        for button in [self.mute_button, self.unmute_button, self.solo_button, self.unsolo_button,
+                       self.solo_group_button, self.unsolo_group_button, self.mute_group_button, self.unmute_group_button]:
+            button.setFixedSize(button_width, button_height)
 
         # Connect buttons to their respective functions
         self.mute_button.clicked.connect(self.mute_all_tracks)
@@ -71,16 +80,16 @@ class TrackControlApp(QMainWindow):
         self.mute_group_button.clicked.connect(self.mute_selected_track_group)
         self.unmute_group_button.clicked.connect(self.unmute_selected_track_group)
 
-        # Add buttons to layout
-        layout.addWidget(QLabel("Control all tracks in REAPER:"))
-        layout.addWidget(self.mute_button)
-        layout.addWidget(self.unmute_button)
-        layout.addWidget(self.solo_button)
-        layout.addWidget(self.unsolo_button)
-        layout.addWidget(self.solo_group_button)
-        layout.addWidget(self.unsolo_group_button)
-        layout.addWidget(self.mute_group_button)
-        layout.addWidget(self.unmute_group_button)
+        # Add buttons to layout in a grid
+        layout.addWidget(QLabel("Control all tracks in REAPER:"), 0, 0, 1, 2)
+        layout.addWidget(self.mute_button, 1, 0)
+        layout.addWidget(self.unmute_button, 1, 1)
+        layout.addWidget(self.solo_button, 2, 0)
+        layout.addWidget(self.unsolo_button, 2, 1)
+        layout.addWidget(self.solo_group_button, 3, 0)
+        layout.addWidget(self.unsolo_group_button, 3, 1)
+        layout.addWidget(self.mute_group_button, 4, 0)
+        layout.addWidget(self.unmute_group_button, 4, 1)
 
         # Set the main widget
         container = QWidget()
@@ -90,26 +99,26 @@ class TrackControlApp(QMainWindow):
     def mute_all_tracks(self):
         project = reapy.Project()
         for track in project.tracks:
-            track.mute()
+            track.Mute()
             print(track.name)
         print("All tracks muted.")
 
     def unmute_all_tracks(self):
         project = reapy.Project()
         for track in project.tracks:
-            track.unmute()
+            track.Un-Mute()
         print("All tracks unmuted.")
 
     def solo_all_tracks(self):
         project = reapy.Project()
         for track in project.tracks:
-            track.solo()
+            track.Solo()
         print("All tracks soloed.")
 
     def unsolo_all_tracks(self):
         project = reapy.Project()
         for track in project.tracks:
-            track.unsolo()
+            track.Un-Solo()
         print("All tracks unsoloed.")
 
     def solo_selected_track_group(self):
@@ -117,24 +126,24 @@ class TrackControlApp(QMainWindow):
         selected_tracks = [track for track in project.tracks if track.is_selected]
 
         if not selected_tracks:
-            print("No track selected.")
+            print("No track .")
             return
 
         selected_track = selected_tracks[0]
         parent_track = selected_track.parent_track
 
         if parent_track is None:
-            print("Selected track has no parent.")
+            print(" track has no parent.")
             return
 
         # Solo all tracks with the same parent
         for track in project.tracks:
             if track.parent_track == parent_track:
-                track.solo()
+                track.Solo()
                 print(f"Soloed track: {track.name}")
 
         # Mute the parent track
-        parent_track.solo()
+        parent_track.Solo()
         print(f"Muted parent track: {parent_track.name}")
 
     def unsolo_selected_track_group(self):
@@ -142,24 +151,24 @@ class TrackControlApp(QMainWindow):
         selected_tracks = [track for track in project.tracks if track.is_selected]
 
         if not selected_tracks:
-            print("No track selected.")
+            print("No track .")
             return
 
         selected_track = selected_tracks[0]
         parent_track = selected_track.parent_track
 
         if parent_track is None:
-            print("Selected track has no parent.")
+            print(" track has no parent.")
             return
 
-        # Unsolo all tracks with the same parent
+        # Un-Solo all tracks with the same parent
         for track in project.tracks:
             if track.parent_track == parent_track:
-                track.unsolo()
+                track.Un-Solo()
                 print(f"Unsoloed track: {track.name}")
 
-        # Unmute the parent track
-        parent_track.unsolo()
+        # Un-Mute the parent track
+        parent_track.Un-Solo()
         print(f"Unmuted parent track: {parent_track.name}")
 
     def mute_selected_track_group(self):
@@ -167,24 +176,24 @@ class TrackControlApp(QMainWindow):
         selected_tracks = [track for track in project.tracks if track.is_selected]
 
         if not selected_tracks:
-            print("No track selected.")
+            print("No track .")
             return
 
         selected_track = selected_tracks[0]
         parent_track = selected_track.parent_track
 
         if parent_track is None:
-            print("Selected track has no parent.")
+            print(" track has no parent.")
             return
 
         # Mute all tracks with the same parent
         for track in project.tracks:
             if track.parent_track == parent_track:
-                track.mute()
+                track.Mute()
                 print(f"Muted track: {track.name}")
 
         # Mute the parent track
-        parent_track.mute()
+        parent_track.Mute()
         print(f"Muted parent track: {parent_track.name}")
 
     def unmute_selected_track_group(self):
@@ -192,28 +201,28 @@ class TrackControlApp(QMainWindow):
         selected_tracks = [track for track in project.tracks if track.is_selected]
 
         if not selected_tracks:
-            print("No track selected.")
+            print("No track .")
             return
 
         selected_track = selected_tracks[0]
         parent_track = selected_track.parent_track
 
         if parent_track is None:
-            print("Selected track has no parent.")
+            print(" track has no parent.")
             return
 
-        # Unmute all tracks with the same parent
+        # Un-Mute all tracks with the same parent
         for track in project.tracks:
             if track.parent_track == parent_track:
-                track.unmute()
+                track.Un-Mute()
                 print(f"Unmuted track: {track.name}")
 
-        # Unmute the parent track
-        parent_track.unmute()
+        # Un-Mute the parent track
+        parent_track.Un-Mute()
         print(f"Unmuted parent track: {parent_track.name}")
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     window = TrackControlApp()
     window.show()
-    sys.exit(app.exec_()) 
+    sys.exit(app.exec_())

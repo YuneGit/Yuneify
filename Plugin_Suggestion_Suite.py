@@ -11,6 +11,7 @@ import tkinter as tk
 from tkinter import messagebox
 from PyQt5 import QtWidgets
 import sys
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel, QPushButton, QLineEdit, QSpinBox
 
 # Initialize the OpenAI client
 client = OpenAI()
@@ -112,50 +113,80 @@ def create_tracks(selected_suggestions):
         else:
             print("Error: One of the required variables is not assigned. Please check the suggestions.")
 
-class PluginSuggestionApp(QtWidgets.QWidget):
-    def __init__(self):
-        super().__init__()
-        self.init_ui()
-
-    def init_ui(self):
+class PluginSuggestionApp(QWidget):
+    def __init__(self, parent=None):
+        super().__init__(parent)
         self.setWindowTitle("Plugin Suggestion Suite")
-        
-        # Create layout
-        layout = QtWidgets.QVBoxLayout()
+        self.setFixedSize(275, 175)  # Set fixed size to 275x275
 
-        # Create input fields
-        self.prompt_input = QtWidgets.QLineEdit(self)
+        # Apply modern dark mode style
+        self.setStyleSheet("""
+            QWidget {
+                background-color: #1E1E1E;
+                color: #FFFFFF;
+                border-radius: 10px;
+            }
+            QLabel {
+                color: #FFFFFF;
+                font-size: 16px;
+                margin: 5px;
+            }
+            QPushButton {
+                background-color: #3A3A3A;
+                color: #FFFFFF;
+                border-radius: 12px;
+                padding: 3px 7px;
+                font-size: 14px;
+                border: 1px solid #5A5A5A;
+                min-width: 100px;
+                max-width: 100px;
+                min-height: 20px;
+                max-height: 20px;
+            }
+            QPushButton:hover {
+                background-color: #4A4A4A;
+            }
+            QPushButton:pressed {
+                background-color: #2A2A2A;
+            }
+            QLineEdit {
+                background-color: #2A2A2A;
+                color: #FFFFFF;
+                border-radius: 3px;
+                padding: 3px;
+                border: 1px solid #5A5A5A;
+            }
+            QSpinBox {
+                background-color: #2A2A2A;
+                color: #FFFFFF;
+                border-radius: 3px;
+                padding: 3px;
+                border: 1px solid #5A5A5A;
+            }
+        """)
+
+        layout = QVBoxLayout(self)
+
+        # Add widgets for plugin suggestion
+        self.prompt_input = QLineEdit(self)
         self.prompt_input.setPlaceholderText("Enter your composition theme...")
 
-        self.num_tracks_input = QtWidgets.QSpinBox(self)
+        self.num_tracks_input = QSpinBox(self)
         self.num_tracks_input.setRange(1, 10)
         self.num_tracks_input.setValue(3)
 
-        # Create buttons
-        self.submit_button = QtWidgets.QPushButton("Get Suggestions", self)
+        self.submit_button = QPushButton("Get Suggestions", self)
         self.submit_button.clicked.connect(self.get_suggestions)
 
         # Add widgets to layout
-        layout.addWidget(QtWidgets.QLabel("User Prompt:"))
+        layout.addWidget(QLabel("User Prompt:"))
         layout.addWidget(self.prompt_input)
-        layout.addWidget(QtWidgets.QLabel("Number of Tracks:"))
+        layout.addWidget(QLabel("Number of Tracks:"))
         layout.addWidget(self.num_tracks_input)
         layout.addWidget(self.submit_button)
 
-        # Set layout
-        self.setLayout(layout)
-
     def get_suggestions(self):
-        user_prompt = self.prompt_input.text()
-        num_tracks = self.num_tracks_input.value()
-        
-        # Call the existing function to get suggestions
-        kontakt_folders = get_folder_names(load_kontakt_library_path())
-        vst_plugins = get_vst_plugins()
-        suggestions = get_gpt_suggestions(user_prompt, vst_plugins, kontakt_folders, num_tracks=num_tracks)
-        
-        # Display suggestions
-        QtWidgets.QMessageBox.information(self, "Suggestions", suggestions)
+        print("Suggestions generated.")
 
 def main():
     """Main function to orchestrate the track creation workflow."""

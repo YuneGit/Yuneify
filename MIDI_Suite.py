@@ -2,7 +2,8 @@ import sys
 import reapy
 import time
 import random
-from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QVBoxLayout, QWidget, QSpinBox, QLabel, QComboBox
+from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QVBoxLayout, QWidget, QSpinBox, QLabel, QComboBox, QGridLayout
+from PyQt5.QtCore import Qt
 from reapy import reascript_api as RPR
 import statistics
 
@@ -10,7 +11,7 @@ class MidiSuite(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("MIDI Suite")
-        self.setGeometry(100, 100, 400, 300)
+        self.setGeometry(100, 100, 275, 275)
         
         # Apply modern dark mode style
         self.setStyleSheet("""
@@ -22,15 +23,19 @@ class MidiSuite(QMainWindow):
             QLabel {
                 color: #FFFFFF;
                 font-size: 16px;
-                margin: 5px;
+                margin: 0px;
             }
             QPushButton {
                 background-color: #3A3A3A;
                 color: #FFFFFF;
                 border-radius: 12px;
-                padding: 8px 16px;
+                padding: 3px 7px;
                 font-size: 14px;
                 border: 1px solid #5A5A5A;
+                min-width: 100px;
+                max-width: 100px;
+                min-height: 20px;
+                max-height: 20px;
             }
             QPushButton:hover {
                 background-color: #4A4A4A;
@@ -41,8 +46,8 @@ class MidiSuite(QMainWindow):
             QComboBox {
                 background-color: #3A3A3A;
                 color: #FFFFFF;
-                border-radius: 5px;
-                padding: 5px;
+                border-radius: 3px;
+                padding: 3px;
                 border: 1px solid #5A5A5A;
             }
             QComboBox QAbstractItemView {
@@ -55,7 +60,18 @@ class MidiSuite(QMainWindow):
         # Initialize the main widget and layout
         self.main_widget = QWidget(self)
         self.setCentralWidget(self.main_widget)
-        self.layout = QVBoxLayout(self.main_widget)
+        
+        # Main vertical layout
+        self.main_layout = QVBoxLayout(self.main_widget)
+        
+        # Add a label at the top
+        self.title_label = QLabel("MIDI Suite", self)
+        self.title_label.setAlignment(Qt.AlignCenter)  # Center the label text
+        self.main_layout.addWidget(self.title_label)
+        
+        # Grid layout for buttons
+        self.grid_layout = QGridLayout()
+        self.main_layout.addLayout(self.grid_layout)
         
         # Add controls for velocity adjustment
         self.add_velocity_controls()
@@ -88,64 +104,58 @@ class MidiSuite(QMainWindow):
         self.init_midi_operations()
 
     def add_velocity_controls(self):
-        self.velocity_label = QLabel("Adjust Velocity by:", self)
-        self.layout.addWidget(self.velocity_label)
-        
         self.velocity_spinbox = QSpinBox(self)
         self.velocity_spinbox.setRange(-127, 127)
         self.velocity_spinbox.setValue(10)  # Default value
-        self.layout.addWidget(self.velocity_spinbox)
+        self.grid_layout.addWidget(self.velocity_spinbox, 0, 0)
         
         self.velocity_button = QPushButton("Adjust Velocities", self)
         self.velocity_button.clicked.connect(self.adjust_velocities)
-        self.layout.addWidget(self.velocity_button)
+        self.grid_layout.addWidget(self.velocity_button, 0, 1)
 
     def add_transpose_controls(self):
-        self.transpose_label = QLabel("Transpose by Interval:", self)
-        self.layout.addWidget(self.transpose_label)
-        
         self.transpose_combobox = QComboBox(self)
         self.transpose_combobox.addItems(["Octave", "Major Third", "Minor Third", "Perfect Fifth"])
-        self.layout.addWidget(self.transpose_combobox)
+        self.grid_layout.addWidget(self.transpose_combobox, 1, 0)
         
         self.transpose_button = QPushButton("Transpose Notes", self)
         self.transpose_button.clicked.connect(self.transpose_notes)
-        self.layout.addWidget(self.transpose_button)
+        self.grid_layout.addWidget(self.transpose_button, 1, 1)
 
     def add_randomize_controls(self):
         self.randomize_velocity_button = QPushButton("Randomize Velocities", self)
         self.randomize_velocity_button.clicked.connect(self.randomize_velocities)
-        self.layout.addWidget(self.randomize_velocity_button)
+        self.grid_layout.addWidget(self.randomize_velocity_button, 2, 0)
 
     def add_quantize_controls(self):
         self.quantize_button = QPushButton("Quantize Notes", self)
         self.quantize_button.clicked.connect(self.quantize_notes)
-        self.layout.addWidget(self.quantize_button)
+        self.grid_layout.addWidget(self.quantize_button, 2, 1)
 
     def add_humanize_controls(self):
         self.humanize_button = QPushButton("Humanize Timing", self)
         self.humanize_button.clicked.connect(self.humanize_timing)
-        self.layout.addWidget(self.humanize_button)
+        self.grid_layout.addWidget(self.humanize_button, 3, 0)
 
     def add_scale_controls(self):
         self.scale_velocity_button = QPushButton("Scale Velocities", self)
         self.scale_velocity_button.clicked.connect(self.scale_velocities)
-        self.layout.addWidget(self.scale_velocity_button)
+        self.grid_layout.addWidget(self.scale_velocity_button, 3, 1)
 
     def add_normalize_controls(self):
         self.normalize_velocity_button = QPushButton("Normalize Velocities", self)
         self.normalize_velocity_button.clicked.connect(self.normalize_velocities)
-        self.layout.addWidget(self.normalize_velocity_button)
+        self.grid_layout.addWidget(self.normalize_velocity_button, 4, 0)
 
     def add_invert_pitch_controls(self):
         self.invert_pitch_button = QPushButton("Invert Pitch", self)
         self.invert_pitch_button.clicked.connect(self.invert_pitch)
-        self.layout.addWidget(self.invert_pitch_button)
+        self.grid_layout.addWidget(self.invert_pitch_button, 4, 1)
 
     def add_legato_controls(self):
         self.legato_button = QPushButton("Make Legato", self)
         self.legato_button.clicked.connect(self.make_legato)
-        self.layout.addWidget(self.legato_button)
+        self.grid_layout.addWidget(self.legato_button, 5, 0)
 
     def init_midi_operations(self):
         self.velocity_adjuster = MidiVelocityAdjuster()

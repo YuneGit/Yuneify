@@ -10,7 +10,10 @@ class TrackRouter(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Track Router")
-        self.setGeometry(200, 100, 600, 400)
+        self.setGeometry(100, 100, 275, 175)
+        
+        # Set a fixed width for the window
+        self.setFixedWidth(275)
         
         # Apply modern dark mode style
         self.setStyleSheet("""
@@ -21,17 +24,17 @@ class TrackRouter(QMainWindow):
             }
             QLabel {
                 color: #FFFFFF;
-                font-size: 16px;
-                margin: 5px;
+                font-size: 14px;
+                margin: 2px;
             }
             QPushButton {
                 background-color: #3A3A3A;
                 color: #FFFFFF;
-                border-radius: 12px;
-                padding: 8px 16px;
-                font-size: 14px;
+                border-radius: 8px;
+                padding: 5px 5px;
+                font-size: 16px;
                 border: 1px solid #5A5A5A;
-                min-width: 120px;
+                min-width: 20px;
             }
             QPushButton:hover {
                 background-color: #4A4A4A;
@@ -43,10 +46,11 @@ class TrackRouter(QMainWindow):
                 background-color: #2A2A2A;
                 border: 1px solid #5A5A5A;
                 border-radius: 5px;
-                padding: 5px;
+                padding: 2px;
+                font-size: 12px;
             }
             QListWidget::item {
-                padding: 5px;
+                padding: 1px;
                 border-radius: 3px;
             }
             QListWidget::item:selected {
@@ -55,10 +59,11 @@ class TrackRouter(QMainWindow):
             QComboBox {
                 background-color: #3A3A3A;
                 color: #FFFFFF;
-                border-radius: 5px;
-                padding: 5px;
+                border-radius: 2px;
+                padding: 2px;
                 border: 1px solid #5A5A5A;
-                min-width: 200px;
+                min-width: 20px;
+                font-size: 16px;
             }
             QComboBox QAbstractItemView {
                 background-color: #2A2A2A;
@@ -66,16 +71,8 @@ class TrackRouter(QMainWindow):
                 selection-background-color: #4A4A4A;
             }
         """)
-
         # Main layout
         main_layout = QHBoxLayout()
-        
-        # Left side (Source tracks)
-        left_layout = QVBoxLayout()
-        left_layout.addWidget(QLabel("Source Tracks:"))
-        self.source_list = QListWidget()
-        self.source_list.setSelectionMode(QListWidget.ExtendedSelection)
-        left_layout.addWidget(self.source_list)
         
         # Middle (Controls)
         middle_layout = QVBoxLayout()
@@ -83,10 +80,10 @@ class TrackRouter(QMainWindow):
         self.destination_combo = QComboBox()
         middle_layout.addWidget(QLabel("Destination Track:"))
         middle_layout.addWidget(self.destination_combo)
-        self.route_button = QPushButton("Create Send →")
+        self.route_button = QPushButton("Create Send")
         self.route_button.clicked.connect(self.create_send)
         middle_layout.addWidget(self.route_button)
-        self.remove_button = QPushButton("Remove Send ×")
+        self.remove_button = QPushButton("Remove Send")
         self.remove_button.clicked.connect(self.remove_send)
         middle_layout.addWidget(self.remove_button)
         middle_layout.addStretch()
@@ -98,14 +95,11 @@ class TrackRouter(QMainWindow):
         right_layout.addWidget(self.sends_list)
         
         # Add layouts to main layout
-        left_widget = QWidget()
-        left_widget.setLayout(left_layout)
         middle_widget = QWidget()
         middle_widget.setLayout(middle_layout)
         right_widget = QWidget()
         right_widget.setLayout(right_layout)
         
-        main_layout.addWidget(left_widget)
         main_layout.addWidget(middle_widget)
         main_layout.addWidget(right_widget)
         
@@ -126,15 +120,20 @@ class TrackRouter(QMainWindow):
         """Refresh the lists of tracks and sends"""
         project = reapy.Project()
         
+        # Preserve the current destination track selection
+        current_dest_index = self.destination_combo.currentIndex()
+        
         # Clear existing items
-        self.source_list.clear()
         self.destination_combo.clear()
         self.sends_list.clear()
         
-        # Add all tracks to both source list and destination combo
+        # Add all tracks to destination combo
         for track in project.tracks:
-            self.source_list.addItem(track.name)
             self.destination_combo.addItem(track.name)
+        
+        # Restore the previous destination track selection if possible
+        if current_dest_index >= 0 and current_dest_index < self.destination_combo.count():
+            self.destination_combo.setCurrentIndex(current_dest_index)
         
         # Group sends by destination track
         sends_by_dest = {}
@@ -152,32 +151,28 @@ class TrackRouter(QMainWindow):
                 self.sends_list.addItem(f"    {source_name}")
 
     def create_send(self):
-        """Create sends from selected source tracks to destination track"""
+        """Create sends from all user-selected tracks in Reaper to another selected track"""
         project = reapy.Project()
-        selected_items = self.source_list.selectedItems()
-        destination_idx = self.destination_combo.currentIndex()
         
-        if not selected_items:
-            print("No source tracks selected")
+        # Get all currently selected tracks in Reaper
+        selected_tracks = project.selected_tracks
+        if len(selected_tracks) < 2:
+            print("Select at least two tracks in Reaper: one as source and one as destination")
             return
-            
-        # Get destination track
-        dest_track = project.tracks[destination_idx]
         
-        # Create sends for each selected source track
-        for item in selected_items:
-            source_idx = self.source_list.row(item)
-            source_track = project.tracks[source_idx]
+        # Assume the last selected track is the destination
+        dest_track = selected_tracks[-1]
+        
+        for source_track in selected_tracks[:-1]:
+            # Debugging: Print source and destination track names
+            print(f"Attempting to create send from {source_track.name} to {dest_track.name}")
             
-            # Skip if trying to send to self
-            if source_idx == destination_idx:
+            if source_track == dest_track:
                 continue
                 
-            # Create the send
             source_track.add_send(dest_track)
             print(f"Created send: {source_track.name} → {dest_track.name}")
         
-        # Refresh the display
         self.refresh_tracks()
 
     def remove_send(self):
