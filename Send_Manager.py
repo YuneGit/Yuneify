@@ -24,17 +24,16 @@ class TrackRouter(QMainWindow):
             }
             QLabel {
                 color: #FFFFFF;
-                font-size: 14px;
-                margin: 2px;
+                font-size: 13px;
+                margin: 0px;
             }
             QPushButton {
                 background-color: #3A3A3A;
                 color: #FFFFFF;
                 border-radius: 8px;
-                padding: 5px 5px;
-                font-size: 16px;
+                padding: 4px 4px;
+                font-size: 14px;
                 border: 1px solid #5A5A5A;
-                min-width: 20px;
             }
             QPushButton:hover {
                 background-color: #4A4A4A;
@@ -59,11 +58,11 @@ class TrackRouter(QMainWindow):
             QComboBox {
                 background-color: #3A3A3A;
                 color: #FFFFFF;
-                border-radius: 2px;
-                padding: 2px;
+                border-radius: 1px;
+                padding: 3px;
                 border: 1px solid #5A5A5A;
                 min-width: 20px;
-                font-size: 16px;
+                font-size: 13px;
             }
             QComboBox QAbstractItemView {
                 background-color: #2A2A2A;

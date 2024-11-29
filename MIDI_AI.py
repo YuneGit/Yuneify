@@ -51,13 +51,9 @@ class AIOrchestrationStyleSelector(QWidget):
                 background-color: #3A3A3A;
                 color: #FFFFFF;
                 border-radius: 12px;
-                padding: 3px 7px;
+                padding: 4px 4px;
                 font-size: 14px;
                 border: 1px solid #5A5A5A;
-                min-width: 100px;
-                max-width: 100px;
-                min-height: 20px;
-                max-height: 20px;
             }
             QPushButton:hover {
                 background-color: #4A4A4A;
@@ -177,7 +173,7 @@ class AIMidiOrchestrator:
         style = (
             f"Pitches are notes. Orchestrate the notes in the style of {self.style}. "
             f"{self.custom_instructions} "
-            "Avoid close-voicings and focus on octaves and lush wide voicings. "
+            "Avoid close-voicings and focus on creating three note chords and lush wide voicings. "
             "Determine the key based on the input. Do not use duplicate notes or pitches."
         )
         client = OpenAI()  # Initialize the OpenAI client

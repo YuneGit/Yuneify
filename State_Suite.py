@@ -1,12 +1,13 @@
 import sys
 from PyQt5.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QWidget, QPushButton, QLabel, QComboBox, QGridLayout
+from PyQt5.QtCore import Qt
 import reapy
 
 class TrackControlApp(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Track Control")
-        self.setGeometry(100, 100, 275, 175)  # Fixed window size
+        self.setGeometry(100, 100, 275, 275)  # Fixed window size
 
         # Apply modern dark mode style
         self.setStyleSheet("""
@@ -38,7 +39,7 @@ class TrackControlApp(QMainWindow):
                 background-color: #3A3A3A;
                 color: #FFFFFF;
                 border-radius: 3px;
-                padding: 2px;
+                padding: 3px;
                 border: 1px solid #5A5A5A;
             }
             QComboBox QAbstractItemView {
@@ -52,6 +53,12 @@ class TrackControlApp(QMainWindow):
         layout = QGridLayout()
         layout.setContentsMargins(8, 8, 8, 8)  # Set margins
         layout.setSpacing(5)  # Set spacing between widgets
+
+        # Add label to layout in the top middle
+        layout.addWidget(QLabel("Control all tracks in REAPER:"), 0, 0, 1, 2, alignment=Qt.AlignCenter)
+
+        # Add a stretchable space to push the label to the top
+        layout.setRowStretch(1, 1)
 
         # Add buttons for track control
         self.mute_button = QPushButton("Mute All Tracks")
@@ -81,15 +88,14 @@ class TrackControlApp(QMainWindow):
         self.unmute_group_button.clicked.connect(self.unmute_selected_track_group)
 
         # Add buttons to layout in a grid
-        layout.addWidget(QLabel("Control all tracks in REAPER:"), 0, 0, 1, 2)
-        layout.addWidget(self.mute_button, 1, 0)
-        layout.addWidget(self.unmute_button, 1, 1)
-        layout.addWidget(self.solo_button, 2, 0)
-        layout.addWidget(self.unsolo_button, 2, 1)
-        layout.addWidget(self.solo_group_button, 3, 0)
-        layout.addWidget(self.unsolo_group_button, 3, 1)
-        layout.addWidget(self.mute_group_button, 4, 0)
-        layout.addWidget(self.unmute_group_button, 4, 1)
+        layout.addWidget(self.mute_button, 2, 0)
+        layout.addWidget(self.unmute_button, 2, 1)
+        layout.addWidget(self.solo_button, 3, 0)
+        layout.addWidget(self.unsolo_button, 3, 1)
+        layout.addWidget(self.solo_group_button, 4, 0)
+        layout.addWidget(self.unsolo_group_button, 4, 1)
+        layout.addWidget(self.mute_group_button, 5, 0)
+        layout.addWidget(self.unmute_group_button, 5, 1)
 
         # Set the main widget
         container = QWidget()

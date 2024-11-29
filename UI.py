@@ -28,7 +28,7 @@ def main():
 
     # Add widgets to the grid layout
     layout.addWidget(track_control_app, 0, 0)
-    layout.addWidget(track_router, 0, 1)
+    layout.addWidget(track_router, 2, 0)
     layout.addWidget(plugin_suggestion_app, 1, 0)
     layout.addWidget(midi_ai, 1, 1)
 
@@ -39,7 +39,7 @@ def main():
     layout.addWidget(logo_label, 2, 1)  # Place the image in the second grid slot
 
     # Add the MidiSuite to the grid
-    layout.addWidget(midi_suite, 2, 0)  # Place MidiSuite in the first grid slot
+    layout.addWidget(midi_suite, 0, 1)  # Place MidiSuite in the first grid slot
 
     window.setCentralWidget(central_widget)
     window.setWindowTitle("Unified Audio Suite")

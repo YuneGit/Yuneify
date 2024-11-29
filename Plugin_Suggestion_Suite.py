@@ -135,13 +135,9 @@ class PluginSuggestionApp(QWidget):
                 background-color: #3A3A3A;
                 color: #FFFFFF;
                 border-radius: 12px;
-                padding: 3px 7px;
+                padding: 4px 4px;
                 font-size: 14px;
                 border: 1px solid #5A5A5A;
-                min-width: 100px;
-                max-width: 100px;
-                min-height: 20px;
-                max-height: 20px;
             }
             QPushButton:hover {
                 background-color: #4A4A4A;
