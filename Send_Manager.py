@@ -140,7 +140,7 @@ class TrackRouter(QMainWindow):
             for send in track.sends:
                 dest_track = send.dest_track
                 if dest_track.name not in sends_by_dest:
-                    sends_by_dest[dest_track.name] = []
+                    sends_by_dest[dest_track.name] = []  # Initialize the list
                 sends_by_dest[dest_track.name].append(track.name)
         
         # Add grouped sends to sends list
@@ -204,6 +204,21 @@ class TrackRouter(QMainWindow):
         
         # Refresh the display
         self.refresh_tracks()
+
+    def get_tracks(self):
+        """Return the list of tracks in the current project"""
+        project = reapy.Project()
+        return project.tracks
+
+    def create_send_to_track(self, dest_track):
+        """Create a send from all selected tracks to the specified destination track"""
+        project = reapy.Project()
+        selected_tracks = project.selected_tracks
+
+        for source_track in selected_tracks:
+            if source_track != dest_track:
+                source_track.add_send(dest_track)
+                print(f"Created send: {source_track.name} → {dest_track.name}")
 
 def main():
     app = QApplication(sys.argv)

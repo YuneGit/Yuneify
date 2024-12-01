@@ -7,12 +7,8 @@ class TrackControlApp(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Track Control")
-<<<<<<< Updated upstream
         self.setGeometry(100, 100, 275, 275)  # Fixed window size
-=======
-        self.setGeometry(100, 100, 275, 175)  # Fixed window size
         self.setFixedWidth(275)
->>>>>>> Stashed changes
 
         # Apply modern dark mode style
         self.setStyleSheet("""
@@ -110,26 +106,26 @@ class TrackControlApp(QMainWindow):
     def mute_all_tracks(self):
         project = reapy.Project()
         for track in project.tracks:
-            track.Mute()
+            track.mute()
             print(track.name)
         print("All tracks muted.")
 
     def unmute_all_tracks(self):
         project = reapy.Project()
         for track in project.tracks:
-            track.Un-Mute()
+            track.unmute()
         print("All tracks unmuted.")
 
     def solo_all_tracks(self):
         project = reapy.Project()
         for track in project.tracks:
-            track.Solo()
+            track.solo()
         print("All tracks soloed.")
 
     def unsolo_all_tracks(self):
         project = reapy.Project()
         for track in project.tracks:
-            track.Un-Solo()
+            track.unsolo()
         print("All tracks unsoloed.")
 
     def solo_selected_track_group(self):
@@ -137,74 +133,74 @@ class TrackControlApp(QMainWindow):
         selected_tracks = [track for track in project.tracks if track.is_selected]
 
         if not selected_tracks:
-            print("No track .")
+            print("No track selected.")
             return
 
         selected_track = selected_tracks[0]
         parent_track = selected_track.parent_track
 
         if parent_track is None:
-            print(" track has no parent.")
+            print("Selected track has no parent.")
             return
 
         # Solo all tracks with the same parent
         for track in project.tracks:
             if track.parent_track == parent_track:
-                track.Solo()
+                track.solo()
                 print(f"Soloed track: {track.name}")
 
-        # Mute the parent track
-        parent_track.Solo()
-        print(f"Muted parent track: {parent_track.name}")
+        # Solo the parent track
+        parent_track.solo()
+        print(f"Soloed parent track: {parent_track.name}")
 
     def unsolo_selected_track_group(self):
         project = reapy.Project()
         selected_tracks = [track for track in project.tracks if track.is_selected]
 
         if not selected_tracks:
-            print("No track .")
+            print("No track selected.")
             return
 
         selected_track = selected_tracks[0]
         parent_track = selected_track.parent_track
 
         if parent_track is None:
-            print(" track has no parent.")
+            print("Selected track has no parent.")
             return
 
-        # Un-Solo all tracks with the same parent
+        # Unsolo all tracks with the same parent
         for track in project.tracks:
             if track.parent_track == parent_track:
-                track.Un-Solo()
+                track.unsolo()
                 print(f"Unsoloed track: {track.name}")
 
-        # Un-Mute the parent track
-        parent_track.Un-Solo()
-        print(f"Unmuted parent track: {parent_track.name}")
+        # Unsolo the parent track
+        parent_track.unsolo()
+        print(f"Unsoloed parent track: {parent_track.name}")
 
     def mute_selected_track_group(self):
         project = reapy.Project()
         selected_tracks = [track for track in project.tracks if track.is_selected]
 
         if not selected_tracks:
-            print("No track .")
+            print("No track selected.")
             return
 
         selected_track = selected_tracks[0]
         parent_track = selected_track.parent_track
 
         if parent_track is None:
-            print(" track has no parent.")
+            print("Selected track has no parent.")
             return
 
         # Mute all tracks with the same parent
         for track in project.tracks:
             if track.parent_track == parent_track:
-                track.Mute()
+                track.mute()
                 print(f"Muted track: {track.name}")
 
         # Mute the parent track
-        parent_track.Mute()
+        parent_track.mute()
         print(f"Muted parent track: {parent_track.name}")
 
     def unmute_selected_track_group(self):
@@ -212,24 +208,24 @@ class TrackControlApp(QMainWindow):
         selected_tracks = [track for track in project.tracks if track.is_selected]
 
         if not selected_tracks:
-            print("No track .")
+            print("No track selected.")
             return
 
         selected_track = selected_tracks[0]
         parent_track = selected_track.parent_track
 
         if parent_track is None:
-            print(" track has no parent.")
+            print("Selected track has no parent.")
             return
 
-        # Un-Mute all tracks with the same parent
+        # Unmute all tracks with the same parent
         for track in project.tracks:
             if track.parent_track == parent_track:
-                track.Un-Mute()
+                track.unmute()
                 print(f"Unmuted track: {track.name}")
 
-        # Un-Mute the parent track
-        parent_track.Un-Mute()
+        # Unmute the parent track
+        parent_track.unmute()
         print(f"Unmuted parent track: {parent_track.name}")
 
 if __name__ == "__main__":
