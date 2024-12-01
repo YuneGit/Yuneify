@@ -118,6 +118,7 @@ class PluginSuggestionApp(QWidget):
         super().__init__(parent)
         self.setWindowTitle("Plugin Suggestion Suite")
         self.setFixedSize(275, 175)  # Set fixed size to 275x275
+        self.setFixedWidth(275)
 
         # Apply modern dark mode style
         self.setStyleSheet("""

@@ -12,7 +12,8 @@ class MidiSuite(QMainWindow):
         super().__init__()
         self.setWindowTitle("MIDI Suite")
         self.setGeometry(100, 100, 275, 275)
-        
+        self.setFixedWidth(275)
+
         # Apply modern dark mode style
         self.setStyleSheet("""
             QMainWindow, QWidget {
@@ -548,8 +549,10 @@ class MidiLegatoMaker(MidiOperationBase):
             print("No MIDI notes.")
             return
 
-        print(f"Making {len(notes)} notes legato.")
-        self.make_midi_legato(take, notes)
+        # Filter only selected notes
+        selected_notes = [note for note in notes if note.selected]
+        print(f"Making {len(selected_notes)} selected notes legato.")
+        self.make_midi_legato(take, selected_notes)
 
     def make_midi_legato(self, take, notes):
         for i in range(len(notes) - 1):

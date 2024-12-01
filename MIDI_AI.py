@@ -34,6 +34,7 @@ class AIOrchestrationStyleSelector(QWidget):
     def initUI(self):
         self.setWindowTitle('Select Orchestration Style')
         self.setFixedSize(275, 175)  # Set fixed size to 275x150
+        self.setFixedWidth(275)
 
         # Apply modern dark mode style
         self.setStyleSheet("""

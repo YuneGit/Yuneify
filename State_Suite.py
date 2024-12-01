@@ -7,7 +7,12 @@ class TrackControlApp(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Track Control")
+<<<<<<< Updated upstream
         self.setGeometry(100, 100, 275, 275)  # Fixed window size
+=======
+        self.setGeometry(100, 100, 275, 175)  # Fixed window size
+        self.setFixedWidth(275)
+>>>>>>> Stashed changes
 
         # Apply modern dark mode style
         self.setStyleSheet("""
