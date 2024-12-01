@@ -1,5 +1,5 @@
 # Yuneify REAPER MIDI and FX Control Suite
-
+---
 Yuneify is a project that improves and speeds up your workflow in **REAPER**. These scripts automate various tasks related to MIDI manipulation, plugin management, and track management using REAPER's API and GPT-powered suggestions. 
 
 The scripts are designed to work with **REAPER's distant API**, enabling remote control of REAPER from Python. 
@@ -180,5 +180,3 @@ Open the project folder in **VS Code** (via `Yuneify.py`) to edit parameters lik
 
 This project is licensed under the **MIT License** with a **Commons Clause**. See the [LICENSE](LICENSE) file for details.
 ```
-
-This revision improves clarity, consistency, and formatting to make the markdown more user-friendly and professional.
