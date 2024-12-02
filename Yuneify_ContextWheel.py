@@ -16,7 +16,7 @@ class MouseFilter(QObject):
 
     def eventFilter(self, obj, event):
         if event.type() == QEvent.MouseButtonPress:
-            self.window.close()
+            self.window.hide()
         return super().eventFilter(obj, event)
 
 class ContextWheel(QMainWindow):
@@ -40,8 +40,8 @@ class ContextWheel(QMainWindow):
         # Create buttons in a circular layout
         self.create_circular_buttons(actions)
 
-        # Add a central "X" button to close the window
-        self.add_close_button()
+        # Add a central "X" button to hide the window
+        self.add_hide_button()
 
         # Optionally add navigation buttons
         if show_navigation:
@@ -49,7 +49,7 @@ class ContextWheel(QMainWindow):
 
         # Install the event filter
         self.mouse_filter = MouseFilter(self)
-        QApplication.instance().installEventFilter(self.mouse_filter)
+        # QApplication.instance().installEventFilter(self.mouse_filter)
 
     def show_at_cursor(self):
         # Get the current mouse position
@@ -96,11 +96,21 @@ class ContextWheel(QMainWindow):
         
         # Move the button to center it on the calculated position
         button.move(position.x() - button_center_x, position.y() - button_center_y)
-        button.clicked.connect(lambda: self.button_action(callback))
+        
+        # Connect the button click to the callback
+        button.clicked.connect(lambda checked, cb=callback: self.button_action(cb))
 
-    def add_close_button(self):
-        close_button = QPushButton("X", self)
-        close_button.setStyleSheet("""
+    def button_action(self, callback):
+        try:
+            print(f"Button pressed, executing callback: {callback.__name__}")
+            callback()
+        except Exception as e:
+            print(f"Error executing callback: {e}")
+        self.hide()
+
+    def add_hide_button(self):
+        hide_button = QPushButton("X", self)
+        hide_button.setStyleSheet("""
             QPushButton {
                 background-color: #3A3A3A;
                 color: #FFFFFF;
@@ -111,9 +121,9 @@ class ContextWheel(QMainWindow):
                 background-color: #4A4A4A;
             }
         """)
-        close_button.setFixedSize(30, 30)
-        close_button.move(self.width() // 2 - 15, self.height() // 2 - 15)
-        close_button.clicked.connect(self.close)
+        hide_button.setFixedSize(30, 30)
+        hide_button.move(self.width() // 2 - 15, self.height() // 2 - 15)
+        hide_button.clicked.connect(self.hide)
 
     def add_navigation_buttons(self, navigate_next, navigate_prev):
         next_button = QPushButton(">", self)
@@ -147,10 +157,6 @@ class ContextWheel(QMainWindow):
         prev_button.setFixedSize(30, 30)
         prev_button.move(self.width() // 2 - 55, self.height() // 2 - 15)
         prev_button.clicked.connect(navigate_prev)
-
-    def button_action(self, callback):
-        callback()
-        self.close()
 
     def paintEvent(self, event):
         painter = QPainter(self)

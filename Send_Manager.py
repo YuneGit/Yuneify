@@ -3,8 +3,22 @@ from PyQt5.QtWidgets import (
     QApplication, QMainWindow, QVBoxLayout, QWidget, QPushButton, 
     QLabel, QComboBox, QListWidget, QHBoxLayout, QListWidgetItem
 )
-from PyQt5.QtCore import QTimer
+from PyQt5.QtCore import QTimer, QThread, pyqtSignal
 import reapy
+
+class TrackProcessingThread(QThread):
+    tracks_processed = pyqtSignal(list)
+
+    def run(self):
+        project = reapy.Project()
+        tracks = project.tracks
+        # Convert TrackList to a standard Python list
+        processed_tracks = self.process_tracks(list(tracks))
+        self.tracks_processed.emit(processed_tracks)
+
+    def process_tracks(self, tracks):
+        # Implement track processing logic here
+        return tracks
 
 class TrackRouter(QMainWindow):
     def __init__(self):
@@ -106,51 +120,51 @@ class TrackRouter(QMainWindow):
         container = QWidget()
         container.setLayout(main_layout)
         self.setCentralWidget(container)
-        
+
         # Initialize track lists
         self.refresh_tracks()
 
-        # Set up a timer to refresh tracks every few milliseconds
-        self.timer = QTimer(self)
-        self.timer.timeout.connect(self.refresh_tracks)
-        self.timer.start(500)  # Refresh every 500 milliseconds (adjust as needed)
-
     def refresh_tracks(self):
-        """Refresh the lists of tracks and sends"""
+        """Refresh the track information."""
         project = reapy.Project()
         
         # Preserve the current destination track selection
         current_dest_index = self.destination_combo.currentIndex()
         
-        # Clear existing items
-        self.destination_combo.clear()
-        self.sends_list.clear()
-        
-        # Add all tracks to destination combo
-        for track in project.tracks:
-            self.destination_combo.addItem(track.name)
+        # Only update if the number of tracks has changed
+        if self.destination_combo.count() != len(project.tracks):
+            self.destination_combo.clear()
+            for track in project.tracks:
+                self.destination_combo.addItem(track.name)
         
         # Restore the previous destination track selection if possible
         if current_dest_index >= 0 and current_dest_index < self.destination_combo.count():
             self.destination_combo.setCurrentIndex(current_dest_index)
         
-        # Group sends by destination track
+        # Update sends list only if necessary
+        current_sends = set(self.sends_list.item(i).text() for i in range(self.sends_list.count()))
+        new_sends = set()
         sends_by_dest = {}
         for track in project.tracks:
             for send in track.sends:
                 dest_track = send.dest_track
                 if dest_track.name not in sends_by_dest:
-                    sends_by_dest[dest_track.name] = []  # Initialize the list
+                    sends_by_dest[dest_track.name] = []
                 sends_by_dest[dest_track.name].append(track.name)
         
-        # Add grouped sends to sends list
         for dest_name, source_names in sends_by_dest.items():
-            self.sends_list.addItem(f"→ {dest_name}")
+            new_sends.add(f"→ {dest_name}")
             for source_name in source_names:
-                self.sends_list.addItem(f"    {source_name}")
+                new_sends.add(f"    {source_name}")
+        
+        if current_sends != new_sends:
+            self.sends_list.clear()
+            for send in new_sends:
+                self.sends_list.addItem(send)
 
     def create_send(self):
         """Create sends from all user-selected tracks in Reaper to another selected track"""
+        self.refresh_tracks()  # Refresh tracks when the button is pressed
         project = reapy.Project()
         
         # Get all currently selected tracks in Reaper
@@ -176,6 +190,7 @@ class TrackRouter(QMainWindow):
 
     def remove_send(self):
         """Remove selected sends"""
+        self.refresh_tracks()  # Refresh tracks when the button is pressed
         project = reapy.Project()
         selected_sends = self.sends_list.selectedItems()
         
@@ -219,6 +234,10 @@ class TrackRouter(QMainWindow):
             if source_track != dest_track:
                 source_track.add_send(dest_track)
                 print(f"Created send: {source_track.name} → {dest_track.name}")
+
+    def update_ui_with_tracks(self, tracks):
+        # Update the UI with processed track data
+        ...
 
 def main():
     app = QApplication(sys.argv)
