@@ -1,6 +1,7 @@
 import subprocess
 import sys
 import signal
+import reapy
 
 # Function to handle termination signals
 def terminate_processes(processes):
@@ -9,6 +10,9 @@ def terminate_processes(processes):
     sys.exit(0)
 
 def main():
+    # Configure REAPER for reapy connections
+    reapy.config.config.configure_reaper()
+
     # List to keep track of subprocesses
     processes = []
 
