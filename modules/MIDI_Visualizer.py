@@ -3,7 +3,7 @@ import sys
 from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QGraphicsView, QGraphicsScene, QGraphicsLineItem, QLabel
 from PyQt5.QtGui import QPen, QColor
 from PyQt5.QtCore import Qt, QTimer, QThread, pyqtSignal, QObject
-from AI_composition_review import MidiNote  # Import the shared MIDI note model
+from modules.AI_composition_review import MidiNote  # Corrected import path
 
 class MidiWorker(QObject):
     notes_ready = pyqtSignal(list)

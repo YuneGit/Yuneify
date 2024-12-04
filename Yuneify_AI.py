@@ -1,9 +1,9 @@
 import sys
 from PyQt5.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QWidget, QSplitter
 from PyQt5.QtCore import Qt
-from MIDI_Visualizer import MidiVisualizer
-from MIDI_AI import AIOrchestrationStyleSelector
-from AI_composition_review import CompositionSuggestionApp
+from modules.MIDI_Visualizer import MidiVisualizer
+from modules.MIDI_AI import AIOrchestrationStyleSelector
+from modules.AI_composition_review import CompositionSuggestionApp
 
 class MainApplication(QMainWindow):
     def __init__(self):

@@ -4,13 +4,13 @@ import keyboard
 from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QVBoxLayout, QWidget, QSizePolicy
 from PyQt5.QtCore import Qt, QPoint, pyqtSignal, QObject, QEvent, QThread
 from PyQt5.QtGui import QPainter, QColor, QPen, QCursor
-from State_Suite import TrackControlApp
-from MIDI_Suite import MidiSuite
-from Send_Manager import TrackRouter
+from modules.State_Suite import TrackControlApp
+from modules.MIDI_Suite import MidiSuite
+from modules.Send_Manager import TrackRouter
 import json
-from PRINT import create_print_tracks
-from Height_Lock import TrackHeightLock
-from Auto_VST_Window import FloatingFXController
+from modules.PRINT import create_print_tracks
+from modules.Height_Lock import TrackHeightLock
+from modules.Auto_VST_Window import FloatingFXController
 
 class MouseFilter(QObject):
     def __init__(self, window):

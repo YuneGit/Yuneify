@@ -2,7 +2,6 @@
 
 import sys
 import json
-import subprocess
 import os
 from PyQt5.QtWidgets import QApplication, QMainWindow, QLabel, QVBoxLayout, QWidget, QPushButton, QLineEdit, QFormLayout, QHBoxLayout
 from PyQt5.QtGui import QPixmap, QKeySequence
@@ -40,8 +39,13 @@ class KeybindUI(QMainWindow):
 
     def add_twitch_logo(self):
         logo_label = QLabel(self)
-        pixmap = QPixmap("TwitchLogo.png")
-        logo_label.setPixmap(pixmap)
+        pixmap = QPixmap()
+        if pixmap.load("TwitchLogo.png"):
+            scaled_pixmap = pixmap.scaled(275, 275, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+            logo_label.setPixmap(scaled_pixmap)
+        else:
+            print("Failed to load TwitchLogo.png")
+        logo_label.setFixedSize(275, 275)
         logo_label.setAlignment(Qt.AlignCenter)
         self.layout.addWidget(logo_label)
 
@@ -77,12 +81,6 @@ class KeybindUI(QMainWindow):
         reset_button.clicked.connect(self.reset_keybinds)
         vertical_layout.addWidget(reset_button)
 
-        # Add VS Code launch button underneath the keybinds
-        vscode_button = QPushButton("Launch VS Code", self)
-        vscode_button.setStyleSheet("background-color: #4A4A4A; color: #FFFFFF; border-radius: 5px; padding: 5px;")
-        vscode_button.clicked.connect(self.launch_vscode)
-        vertical_layout.addWidget(vscode_button)
-
         # Create a widget to hold the vertical layout and add it to the main layout
         form_widget = QWidget()
         form_widget.setLayout(vertical_layout)
@@ -113,18 +111,10 @@ class KeybindUI(QMainWindow):
         input_field.setText('+'.join(key_sequence))
         input_field.setReadOnly(True)
 
-    def launch_vscode(self):
-        default_code_path = "C:\\Program Files\\Microsoft VS Code\\Code.exe"
-        script_folder = os.path.dirname(os.path.abspath(__file__))
-        if os.path.exists(default_code_path):
-            try:
-                subprocess.Popen([default_code_path, script_folder])
-            except Exception as e:
-                print(f"Could not open VS Code: {e}")
-
     def load_keybinds(self):
         script_folder = os.path.dirname(os.path.abspath(__file__))
-        keybind_file = os.path.join(script_folder, "keybinds.json")
+        config_folder = os.path.join(script_folder, "config-files")
+        keybind_file = os.path.join(config_folder, "keybinds.json")
         try:
             with open(keybind_file, 'r') as file:
                 return json.load(file)
@@ -137,7 +127,8 @@ class KeybindUI(QMainWindow):
 
     def save_keybinds(self):
         script_folder = os.path.dirname(os.path.abspath(__file__))
-        keybind_file = os.path.join(script_folder, "keybinds.json")
+        config_folder = os.path.join(script_folder, "config-files")
+        keybind_file = os.path.join(config_folder, "keybinds.json")
         for action, input_field in self.keybind_inputs.items():
             self.keybinds[action] = input_field.text()
         with open(keybind_file, 'w') as file:
