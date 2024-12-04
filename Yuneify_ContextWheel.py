@@ -2,12 +2,15 @@ import sys
 import math
 import keyboard
 from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QVBoxLayout, QWidget, QSizePolicy
-from PyQt5.QtCore import Qt, QPoint, pyqtSignal, QObject, QEvent
+from PyQt5.QtCore import Qt, QPoint, pyqtSignal, QObject, QEvent, QThread
 from PyQt5.QtGui import QPainter, QColor, QPen, QCursor
 from State_Suite import TrackControlApp
 from MIDI_Suite import MidiSuite
 from Send_Manager import TrackRouter
 import json
+from PRINT import create_print_tracks
+from Height_Lock import TrackHeightLock
+from Auto_VST_Window import FloatingFXController
 
 class MouseFilter(QObject):
     def __init__(self, window):
@@ -20,84 +23,86 @@ class MouseFilter(QObject):
         return super().eventFilter(obj, event)
 
 class ContextWheel(QMainWindow):
-    show_signal = pyqtSignal()  # Define a custom signal
+    show_signal = pyqtSignal()
 
     def __init__(self, actions, show_navigation=False, navigate_next=None, navigate_prev=None):
         super().__init__()
+        self.setup_window()
+        self.show_signal.connect(self.show_at_cursor)
+
+        self.main_widget = QWidget(self)
+        self.setCentralWidget(self.main_widget)
+        self.main_layout = QVBoxLayout(self.main_widget)
+
+        self.create_buttons(actions)
+        self.add_hide_button()
+
+        if show_navigation:
+            self.add_navigation_buttons(navigate_next, navigate_prev)
+
+        self.mouse_filter = MouseFilter(self)
+        self.height_lock_enabled = False
+        self.auto_vst_window_enabled = False
+        self.height_lock_instance = None
+        self.auto_vst_window_instance = None
+
+    def setup_window(self):
         self.setWindowTitle("Context Wheel")
         self.setGeometry(100, 100, 400, 400)
         self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
         self.setAttribute(Qt.WA_TranslucentBackground)
 
-        # Connect the custom signal to a new method that handles showing the window
-        self.show_signal.connect(self.show_at_cursor)
-
-        # Main widget and layout
-        self.main_widget = QWidget(self)
-        self.setCentralWidget(self.main_widget)
-        self.main_layout = QVBoxLayout(self.main_widget)
-
-        # Create buttons in a circular layout
-        self.create_circular_buttons(actions)
-
-        # Add a central "X" button to hide the window
-        self.add_hide_button()
-
-        # Optionally add navigation buttons
-        if show_navigation:
-            self.add_navigation_buttons(navigate_next, navigate_prev)
-
-        # Install the event filter
-        self.mouse_filter = MouseFilter(self)
-
     def show_at_cursor(self):
-        # Get the current mouse position
         cursor_pos = QCursor.pos()
-        
-        # Move the window so that its center is at the cursor position
         self.move(cursor_pos.x() - self.width() // 2, cursor_pos.y() - self.height() // 2)
-        
-        # Show the window
+        self.setWindowOpacity(0.0)
         self.show()
+        self.fade_in()
 
-    def create_circular_buttons(self, actions):
-        # Calculate positions for buttons in a circle
-        radius = 130  # Increase the radius to move buttons outward
-        angle_step = 2 * math.pi / len(actions)  # Use radians for trigonometric functions
-        center_x = self.width() // 2
-        center_y = self.height() // 2
+    def fade_in(self):
+        for i in range(10):
+            self.setWindowOpacity(i / 10)
+            QApplication.processEvents()
+            QThread.msleep(30)
+
+    def create_buttons(self, actions):
+        radius = 130
+        angle_step = 2 * math.pi / len(actions)
+        center_x, center_y = self.width() // 2, self.height() // 2
+
         for i, (label, callback) in enumerate(actions):
             angle = angle_step * i
-            x = int(center_x + radius * math.cos(angle))
-            y = int(center_y + radius * math.sin(angle))
-            self.add_button(label, callback, QPoint(x, y))
+            position = QPoint(
+                int(center_x + radius * math.cos(angle)),
+                int(center_y + radius * math.sin(angle))
+            )
+            self.add_button(label, callback, position)
 
     def add_button(self, label, callback, position):
         button = QPushButton(label, self)
-        button.setStyleSheet("""
-            QPushButton {
-                background-color: #3A3A3A;
-                color: #FFFFFF;
-                padding: 10px;
-                font-size: 12px;
-            }
-            QPushButton:hover {
-                background-color: #4A4A4A;
-            }
-        """)
+        button.setStyleSheet(self.button_style())
         button.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         button.adjustSize()
-        
-        # Calculate the center of the button
-        button_size = button.size()
-        button_center_x = button_size.width() // 2
-        button_center_y = button_size.height() // 2
-        
-        # Move the button to center it on the calculated position
-        button.move(position.x() - button_center_x, position.y() - button_center_y)
-        
-        # Connect the button click to the callback
+        button.move(position.x() - button.size().width() // 2, position.y() - button.size().height() // 2)
         button.clicked.connect(lambda checked, cb=callback: self.button_action(cb))
+
+    def button_style(self):
+        return """
+            QPushButton {
+                background-color: #2A2A2A;
+                color: #E0E0E0;
+                padding: 10px;
+                font-size: 14px;
+                border: 1px solid #444444;
+                border-radius: 5px;
+            }
+            QPushButton:hover {
+                background-color: #3A3A3A;
+            }
+            QPushButton:pressed {
+                background-color: #1A1A1A;
+            }
+        """
 
     def button_action(self, callback):
         try:
@@ -109,53 +114,39 @@ class ContextWheel(QMainWindow):
 
     def add_hide_button(self):
         hide_button = QPushButton("X", self)
-        hide_button.setStyleSheet("""
-            QPushButton {
-                background-color: #3A3A3A;
-                color: #FFFFFF;
-                padding: 5px;
-                font-size: 10px;
-            }
-            QPushButton:hover {
-                background-color: #4A4A4A;
-            }
-        """)
+        hide_button.setStyleSheet(self.hide_button_style())
         hide_button.setFixedSize(30, 30)
         hide_button.move(self.width() // 2 - 15, self.height() // 2 - 15)
         hide_button.clicked.connect(self.hide)
 
-    def add_navigation_buttons(self, navigate_next, navigate_prev):
-        next_button = QPushButton(">", self)
-        next_button.setStyleSheet("""
+    def hide_button_style(self):
+        return """
             QPushButton {
-                background-color: #3A3A3A;
-                color: #FFFFFF;
+                background-color: #2A2A2A;
+                color: #E0E0E0;
                 padding: 5px;
-                font-size: 10px;
+                font-size: 12px;
+                border: 1px solid #444444;
+                border-radius: 5px;
             }
             QPushButton:hover {
-                background-color: #4A4A4A;
+                background-color: #3A3A3A;
             }
-        """)
-        next_button.setFixedSize(30, 30)
-        next_button.move(self.width() // 2 + 25, self.height() // 2 - 15)
-        next_button.clicked.connect(navigate_next)
+            QPushButton:pressed {
+                background-color: #1A1A1A;
+            }
+        """
 
-        prev_button = QPushButton("<", self)
-        prev_button.setStyleSheet("""
-            QPushButton {
-                background-color: #3A3A3A;
-                color: #FFFFFF;
-                padding: 5px;
-                font-size: 10px;
-            }
-            QPushButton:hover {
-                background-color: #4A4A4A;
-            }
-        """)
-        prev_button.setFixedSize(30, 30)
-        prev_button.move(self.width() // 2 - 55, self.height() // 2 - 15)
-        prev_button.clicked.connect(navigate_prev)
+    def add_navigation_buttons(self, navigate_next, navigate_prev):
+        self.create_navigation_button(">", navigate_next, self.width() // 2 + 25)
+        self.create_navigation_button("<", navigate_prev, self.width() // 2 - 55)
+
+    def create_navigation_button(self, label, callback, x_position):
+        button = QPushButton(label, self)
+        button.setStyleSheet(self.hide_button_style())
+        button.setFixedSize(30, 30)
+        button.move(x_position, self.height() // 2 - 15)
+        button.clicked.connect(callback)
 
     def paintEvent(self, event):
         painter = QPainter(self)
@@ -164,6 +155,24 @@ class ContextWheel(QMainWindow):
         center = QPoint(self.width() // 2, self.height() // 2)
         radius = min(self.width(), self.height()) // 3
         painter.drawEllipse(center, radius, radius)
+
+    def toggle_height_lock(self):
+        if self.height_lock_enabled:
+            self.height_lock_instance = None
+            print("Height Lock disabled")
+        else:
+            self.height_lock_instance = TrackHeightLock()
+            print("Height Lock enabled")
+        self.height_lock_enabled = not self.height_lock_enabled
+
+    def toggle_auto_vst_window(self):
+        if self.auto_vst_window_enabled:
+            self.auto_vst_window_instance = None
+            print("Auto VST Window disabled")
+        else:
+            self.auto_vst_window_instance = FloatingFXController()
+            print("Auto VST Window enabled")
+        self.auto_vst_window_enabled = not self.auto_vst_window_enabled
 
 def create_send_sub_wheel(track_router, start_index=0):
     tracks = track_router.get_tracks()
@@ -220,7 +229,10 @@ def main():
 
     send_manager_actions = [
         ("Create Send", lambda: create_send_sub_wheel(track_router)),
-        ("Remove Send", track_router.remove_send)
+        ("Remove Send", track_router.remove_send),
+        ("Toggle Height Lock", lambda: send_manager_wheel.toggle_height_lock()),
+        ("Toggle Auto VST Window", lambda: send_manager_wheel.toggle_auto_vst_window()),
+        ("Print Tracks", create_print_tracks)
     ]
 
     midi_suite_actions = [

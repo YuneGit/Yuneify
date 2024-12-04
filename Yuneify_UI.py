@@ -13,7 +13,10 @@ class KeybindUI(QMainWindow):
         super().__init__()
         self.setWindowTitle("Keybind Settings")
         self.setGeometry(100, 100, 516, 219)
-        self.setStyleSheet("background-color: #2E2E2E; color: #FFFFFF;")
+        self.setStyleSheet("background-color: #1E1E1E; color: #E0E0E0;")
+
+        # Center the window on the screen
+        self.center_window()
 
         # Load existing keybinds
         self.keybinds = self.load_keybinds()
@@ -28,6 +31,12 @@ class KeybindUI(QMainWindow):
 
         # Add keybind change form
         self.add_keybind_form()
+
+    def center_window(self):
+        screen_geometry = QApplication.desktop().screenGeometry()
+        x = (screen_geometry.width() - self.width()) // 2
+        y = (screen_geometry.height() - self.height() - 100) // 2
+        self.move(x, y)
 
     def add_twitch_logo(self):
         logo_label = QLabel(self)
