@@ -132,38 +132,34 @@ class AIOrchestrationStyleSelector(QWidget):
 # Class to handle MIDI pitch transposition and orchestration
 class AIMidiOrchestrator:
     def __init__(self, style='Default', custom_instructions=''):
-        self.project = reapy.Project()  # Connect to the current REAPER project
+        with reapy.inside_reaper():
+            self.project = reapy.Project()  # Connect to the current REAPER project
         self.style = style
         self.custom_instructions = custom_instructions
 
     # Main method to run the MIDI transposition and orchestration
     def run(self):
-        # Get the first selected item in the REAPER project
-        item = self.project.get_selected_item(0)
-        if not item:
-            print("No selected item.")  # Print error message if no item is selected
-            return
+        with reapy.inside_reaper():
+            item = self.project.get_selected_item(0)
+            if not item:
+                print("No selected item.")
+                return
 
-        # Get the active take from the selected item
-        take = item.active_take
-        if not take:
-            print("No active take.")  # Print error message if there is no active take
-            return
+            take = item.active_take
+            if not take:
+                print("No active take.")
+                return
 
-        # Get all MIDI notes from the active take
-        notes = take.notes
-        if not notes:
-            print("No MIDI notes.")  # Print error message if no MIDI notes are found
-            return
+            notes = take.notes
+            if not notes:
+                print("No MIDI notes.")
+                return
 
-        print(f"Found {len(notes)} notes.")  # Print the number of found notes
-        note_infos = [note.infos for note in notes]  # Extract information from the notes
+            print(f"Found {len(notes)} notes.")
+            note_infos = [note.infos for note in notes]
 
-        # Send the MIDI notes to ChatGPT for orchestration
-        orchestrated_notes = self.send_notes_to_chatgpt(note_infos)
-
-        # Import the orchestrated notes back into REAPER
-        self.import_orchestrated_notes(take, orchestrated_notes)
+            orchestrated_notes = self.send_notes_to_chatgpt(note_infos)
+            self.import_orchestrated_notes(take, orchestrated_notes)
 
     # Method to send MIDI notes to ChatGPT and get orchestrated notes
     def send_notes_to_chatgpt(self, note_infos):
@@ -197,24 +193,22 @@ class AIMidiOrchestrator:
     # Method to import the orchestrated notes back into the REAPER project
     def import_orchestrated_notes(self, take, orchestrated_notes):
         """Import orchestrated notes back into REAPER."""
-        self.project.perform_action(40153)  # Refresh or ensure the context in REAPER
-        for note_info in orchestrated_notes:
-            # Convert start and end times from seconds to PPQ (Pulses Per Quarter note)
-            start_ppq = take.time_to_ppq(note_info.start)
-            end_ppq = take.time_to_ppq(note_info.end)
-
-            # Add the orchestrated note to the active take in REAPER
-            take.add_note(
-                start=start_ppq,
-                end=end_ppq,
-                pitch=note_info.pitch,
-                velocity=note_info.velocity,
-                channel=note_info.channel,
-                selected=note_info.selected,
-                muted=note_info.muted,
-                unit="ppq",  # Specify that we are using PPQ units
-                sort=True  # Ensure notes are sorted correctly
-            )
+        with reapy.inside_reaper():
+            self.project.perform_action(40153)
+            for note_info in orchestrated_notes:
+                start_ppq = take.time_to_ppq(note_info.start)
+                end_ppq = take.time_to_ppq(note_info.end)
+                take.add_note(
+                    start=start_ppq,
+                    end=end_ppq,
+                    pitch=note_info.pitch,
+                    velocity=note_info.velocity,
+                    channel=note_info.channel,
+                    selected=note_info.selected,
+                    muted=note_info.muted,
+                    unit="ppq",
+                    sort=True
+                )
 
 # Entry point of the script
 if __name__ == "__main__":

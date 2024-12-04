@@ -125,115 +125,115 @@ class TrackRouter(QMainWindow):
         self.refresh_tracks()
 
     def refresh_tracks(self):
-        """Refresh the track information."""
-        project = reapy.Project()
-        
-        # Preserve the current destination track selection
-        current_dest_index = self.destination_combo.currentIndex()
-        
-        # Only update if the number of tracks has changed
-        if self.destination_combo.count() != len(project.tracks):
-            self.destination_combo.clear()
+        with reapy.inside_reaper():
+            project = reapy.Project()
+            
+            # Preserve the current destination track selection
+            current_dest_index = self.destination_combo.currentIndex()
+            
+            # Only update if the number of tracks has changed
+            if self.destination_combo.count() != len(project.tracks):
+                self.destination_combo.clear()
+                for track in project.tracks:
+                    self.destination_combo.addItem(track.name)
+            
+            # Restore the previous destination track selection if possible
+            if current_dest_index >= 0 and current_dest_index < self.destination_combo.count():
+                self.destination_combo.setCurrentIndex(current_dest_index)
+            
+            # Update sends list only if necessary
+            current_sends = set(self.sends_list.item(i).text() for i in range(self.sends_list.count()))
+            new_sends = set()
+            sends_by_dest = {}
             for track in project.tracks:
-                self.destination_combo.addItem(track.name)
-        
-        # Restore the previous destination track selection if possible
-        if current_dest_index >= 0 and current_dest_index < self.destination_combo.count():
-            self.destination_combo.setCurrentIndex(current_dest_index)
-        
-        # Update sends list only if necessary
-        current_sends = set(self.sends_list.item(i).text() for i in range(self.sends_list.count()))
-        new_sends = set()
-        sends_by_dest = {}
-        for track in project.tracks:
-            for send in track.sends:
-                dest_track = send.dest_track
-                if dest_track.name not in sends_by_dest:
-                    sends_by_dest[dest_track.name] = []
-                sends_by_dest[dest_track.name].append(track.name)
-        
-        for dest_name, source_names in sends_by_dest.items():
-            new_sends.add(f"→ {dest_name}")
-            for source_name in source_names:
-                new_sends.add(f"    {source_name}")
-        
-        if current_sends != new_sends:
-            self.sends_list.clear()
-            for send in new_sends:
-                self.sends_list.addItem(send)
+                for send in track.sends:
+                    dest_track = send.dest_track
+                    if dest_track.name not in sends_by_dest:
+                        sends_by_dest[dest_track.name] = []
+                    sends_by_dest[dest_track.name].append(track.name)
+            
+            for dest_name, source_names in sends_by_dest.items():
+                new_sends.add(f"→ {dest_name}")
+                for source_name in source_names:
+                    new_sends.add(f"    {source_name}")
+            
+            if current_sends != new_sends:
+                self.sends_list.clear()
+                for send in new_sends:
+                    self.sends_list.addItem(send)
 
     def create_send(self):
-        """Create sends from all user-selected tracks in Reaper to another selected track"""
-        self.refresh_tracks()  # Refresh tracks when the button is pressed
-        project = reapy.Project()
-        
-        # Get all currently selected tracks in Reaper
-        selected_tracks = project.selected_tracks
-        if len(selected_tracks) < 2:
-            print("Select at least two tracks in Reaper: one as source and one as destination")
-            return
-        
-        # Assume the last selected track is the destination
-        dest_track = selected_tracks[-1]
-        
-        for source_track in selected_tracks[:-1]:
-            # Debugging: Print source and destination track names
-            print(f"Attempting to create send from {source_track.name} to {dest_track.name}")
+        with reapy.inside_reaper():
+            self.refresh_tracks()  # Refresh tracks when the button is pressed
+            project = reapy.Project()
             
-            if source_track == dest_track:
-                continue
+            # Get all currently selected tracks in Reaper
+            selected_tracks = project.selected_tracks
+            if len(selected_tracks) < 2:
+                print("Select at least two tracks in Reaper: one as source and one as destination")
+                return
+            
+            # Assume the last selected track is the destination
+            dest_track = selected_tracks[-1]
+            
+            for source_track in selected_tracks[:-1]:
+                # Debugging: Print source and destination track names
+                print(f"Attempting to create send from {source_track.name} to {dest_track.name}")
                 
-            source_track.add_send(dest_track)
-            print(f"Created send: {source_track.name} → {dest_track.name}")
-        
-        self.refresh_tracks()
-
-    def remove_send(self):
-        """Remove selected sends"""
-        self.refresh_tracks()  # Refresh tracks when the button is pressed
-        project = reapy.Project()
-        selected_sends = self.sends_list.selectedItems()
-        
-        if not selected_sends:
-            print("No sends selected")
-            return
-            
-        for send_item in selected_sends:
-            # Parse the send text to get source and destination
-            source_name, dest_name = send_item.text().split(" → ")
-            
-            # Find the corresponding tracks
-            source_track = None
-            for track in project.tracks:
-                if track.name == source_name:
-                    source_track = track
-                    break
-            
-            if source_track:
-                # Remove all sends to the destination track
-                for send in source_track.sends:
-                    dest_track = send.dest_track
-                    if dest_track.name == dest_name:
-                        send.delete()
-                        print(f"Removed send: {source_name} → {dest_name}")
-        
-        # Refresh the display
-        self.refresh_tracks()
-
-    def get_tracks(self):
-        """Return the list of tracks in the current project"""
-        project = reapy.Project()
-        return project.tracks
-
-    def create_send_to_track(self, dest_track):
-        """Create a send from all selected tracks to the specified destination track"""
-        project = reapy.Project()
-        selected_tracks = project.selected_tracks
-
-        for source_track in selected_tracks:
-            if source_track != dest_track:
+                if source_track == dest_track:
+                    continue
+                    
                 source_track.add_send(dest_track)
                 print(f"Created send: {source_track.name} → {dest_track.name}")
+            
+            self.refresh_tracks()
+
+    def remove_send(self):
+        with reapy.inside_reaper():
+            self.refresh_tracks()  # Refresh tracks when the button is pressed
+            project = reapy.Project()
+            selected_sends = self.sends_list.selectedItems()
+            
+            if not selected_sends:
+                print("No sends selected")
+                return
+            
+            for send_item in selected_sends:
+                # Parse the send text to get source and destination
+                source_name, dest_name = send_item.text().split(" → ")
+                
+                # Find the corresponding tracks
+                source_track = None
+                for track in project.tracks:
+                    if track.name == source_name:
+                        source_track = track
+                        break
+                
+                if source_track:
+                    # Remove all sends to the destination track
+                    for send in source_track.sends:
+                        dest_track = send.dest_track
+                        if dest_track.name == dest_name:
+                            send.delete()
+                            print(f"Removed send: {source_name} → {dest_name}")
+            
+            # Refresh the display
+            self.refresh_tracks()
+
+    def get_tracks(self):
+        with reapy.inside_reaper():
+            project = reapy.Project()
+            return project.tracks
+
+    def create_send_to_track(self, dest_track):
+        with reapy.inside_reaper():
+            project = reapy.Project()
+            selected_tracks = project.selected_tracks
+
+            for source_track in selected_tracks:
+                if source_track != dest_track:
+                    source_track.add_send(dest_track)
+                    print(f"Created send: {source_track.name} → {dest_track.name}")
 
     def update_ui_with_tracks(self, tracks):
         # Update the UI with processed track data

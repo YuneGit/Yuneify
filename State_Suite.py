@@ -104,17 +104,19 @@ class TrackControlApp(QMainWindow):
         self.setCentralWidget(container)
 
     def mute_all_tracks(self):
-        project = reapy.Project()
-        for track in project.tracks:
-            track.mute()
-            print(track.name)
-        print("All tracks muted.")
+        with reapy.inside_reaper():
+            project = reapy.Project()
+            for track in project.tracks:
+                track.mute()
+                print(track.name)
+            print("All tracks muted.")
 
     def unmute_all_tracks(self):
-        project = reapy.Project()
-        for track in project.tracks:
-            track.unmute()
-        print("All tracks unmuted.")
+        with reapy.inside_reaper():
+            project = reapy.Project()
+            for track in project.tracks:
+                track.unmute()
+            print("All tracks unmuted.")
 
     def solo_all_tracks(self):
         project = reapy.Project()

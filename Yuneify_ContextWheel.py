@@ -1,12 +1,12 @@
 import sys
 import math
-import keyboard  # You may need to install this package
+import keyboard
 from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QVBoxLayout, QWidget, QSizePolicy
 from PyQt5.QtCore import Qt, QPoint, pyqtSignal, QObject, QEvent
 from PyQt5.QtGui import QPainter, QColor, QPen, QCursor
-from State_Suite import TrackControlApp  # Import the TrackControlApp class
-from MIDI_Suite import MidiSuite  # Import the MidiSuite class
-from Send_Manager import TrackRouter  # Import the TrackRouter class
+from State_Suite import TrackControlApp
+from MIDI_Suite import MidiSuite
+from Send_Manager import TrackRouter
 import json
 
 class MouseFilter(QObject):
@@ -49,7 +49,6 @@ class ContextWheel(QMainWindow):
 
         # Install the event filter
         self.mouse_filter = MouseFilter(self)
-        # QApplication.instance().installEventFilter(self.mouse_filter)
 
     def show_at_cursor(self):
         # Get the current mouse position

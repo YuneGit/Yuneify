@@ -220,20 +220,22 @@ class MidiSuite(QMainWindow):
 
 class MidiOperationBase:
     def __init__(self):
-        self.project = reapy.Project()
+        with reapy.inside_reaper():
+            self.project = reapy.Project()
 
     def get_active_take(self):
-        item = self.project.get_selected_item(0)
-        if not item:
-            print("No selected item.")
-            return None
+        with reapy.inside_reaper():
+            item = self.project.get_selected_item(0)
+            if not item:
+                print("No selected item.")
+                return None
 
-        take = item.active_take
-        if not take:
-            print("No active take.")
-            return None
+            take = item.active_take
+            if not take:
+                print("No active take.")
+                return None
 
-        return take
+            return take
 
 class MidiVelocityAdjuster(MidiOperationBase):
     def run(self, velocity_change):
