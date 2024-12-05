@@ -7,47 +7,23 @@ from PyQt5.QtWidgets import QApplication, QMainWindow, QLabel, QVBoxLayout, QWid
 from PyQt5.QtGui import QPixmap, QKeySequence
 from PyQt5.QtCore import Qt
 
-class KeybindUI(QMainWindow):
-    def __init__(self):
-        super().__init__()
-        self.setWindowTitle("Keybind Settings")
-        self.setGeometry(100, 100, 516, 219)
+class KeybindUI(QWidget):
+    def __init__(self, main_menu):
+        super().__init__(main_menu)
+        self.main_menu = main_menu
         self.setStyleSheet("background-color: #1E1E1E; color: #E0E0E0;")
-
-        # Center the window on the screen
-        self.center_window()
 
         # Load existing keybinds
         self.keybinds = self.load_keybinds()
 
         # Main layout
-        self.main_widget = QWidget(self)
-        self.setCentralWidget(self.main_widget)
-        self.layout = QHBoxLayout(self.main_widget)
-
-        # Add Twitch logo
-        self.add_twitch_logo()
+        self.layout = QVBoxLayout(self)
 
         # Add keybind change form
         self.add_keybind_form()
 
-    def center_window(self):
-        screen_geometry = QApplication.desktop().screenGeometry()
-        x = (screen_geometry.width() - self.width()) // 2
-        y = (screen_geometry.height() - self.height() - 100) // 2
-        self.move(x, y)
-
-    def add_twitch_logo(self):
-        logo_label = QLabel(self)
-        pixmap = QPixmap()
-        if pixmap.load("TwitchLogo.png"):
-            scaled_pixmap = pixmap.scaled(275, 275, Qt.KeepAspectRatio, Qt.SmoothTransformation)
-            logo_label.setPixmap(scaled_pixmap)
-        else:
-            print("Failed to load TwitchLogo.png")
-        logo_label.setFixedSize(275, 275)
-        logo_label.setAlignment(Qt.AlignCenter)
-        self.layout.addWidget(logo_label)
+        # Add back button
+        self.add_back_button()
 
     def add_keybind_form(self):
         form_layout = QFormLayout()
@@ -81,10 +57,16 @@ class KeybindUI(QMainWindow):
         reset_button.clicked.connect(self.reset_keybinds)
         vertical_layout.addWidget(reset_button)
 
-        # Create a widget to hold the vertical layout and add it to the main layout
-        form_widget = QWidget()
-        form_widget.setLayout(vertical_layout)
-        self.layout.addWidget(form_widget, alignment=Qt.AlignCenter)  # Center the form widget
+        self.layout.addLayout(vertical_layout)
+
+    def add_back_button(self):
+        back_button = QPushButton("Back", self)
+        back_button.setStyleSheet("background-color: #4A4A4A; color: #FFFFFF; border-radius: 5px; padding: 5px;")
+        back_button.clicked.connect(self.go_back)
+        self.layout.addWidget(back_button)
+
+    def go_back(self):
+        self.main_menu.stacked_widget.setCurrentIndex(0)
 
     def capture_keybind(self, input_field):
         input_field.setText("Press a key...")
