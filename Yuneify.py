@@ -9,7 +9,7 @@ class MainMenu(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Yuneify Main Menu")
-        self.setGeometry(100, 100, 600, 400)
+        self.setGeometry(100, 100, 100, 150)
         self.setStyleSheet("background-color: #1E1E1E; color: #E0E0E0;")
 
         # Main layout
