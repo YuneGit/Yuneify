@@ -4,6 +4,7 @@ from openai import OpenAI
 from pydantic import BaseModel
 import sys
 from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QLabel, QPushButton, QLineEdit, QScrollArea, QFileDialog, QTabWidget
+from styles import apply_dark_theme  # Import the stylesheet function
 
 # Define a Pydantic model to represent a MIDI note
 class MidiNote(BaseModel):
@@ -25,57 +26,7 @@ class CompositionSuggestionApp(QWidget):
         self.setWindowTitle('Composition Suggestion')
         self.setFixedSize(400, 300)
 
-        self.setStyleSheet("""
-            QWidget {
-                background-color: #1E1E1E;
-                color: #FFFFFF;
-                border-radius: 10px;
-            }
-            QLabel {
-                color: #FFFFFF;
-                font-size: 12px;  /* Smaller font size */
-                margin: 5px;
-            }
-            QPushButton {
-                background-color: #3A3A3A;
-                color: #FFFFFF;
-                border-radius: 12px;
-                padding: 3px 7px;
-                font-size: 14px;
-                border: 1px solid #5A5A5A;
-            }
-            QPushButton:hover {
-                background-color: #4A4A4A;
-            }
-            QPushButton:pressed {
-                background-color: #2A2A2A;
-            }
-            QLineEdit {
-                background-color: #2A2A2A;
-                color: #FFFFFF;
-                border-radius: 3px;
-                padding: 3px;
-                border: 1px solid #5A5A5A;
-            }
-            QTabWidget::pane {
-                border: 1px solid #5A5A5A;
-                background-color: #1E1E1E;
-            }
-            QTabBar::tab {
-                background: #3A3A3A;
-                color: #FFFFFF;
-                padding: 5px;
-                border: 1px solid #5A5A5A;
-                border-bottom-color: #1E1E1E; /* same as pane color */
-            }
-            QTabBar::tab:selected {
-                background: #4A4A4A;
-                border-bottom-color: #4A4A4A; /* same as tab color */
-            }
-            QTabBar::tab:hover {
-                background: #5A5A5A;
-            }
-        """)
+        apply_dark_theme(self)
 
         layout = QVBoxLayout()
 
@@ -306,6 +257,7 @@ class AICompositionSuggester:
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
+    apply_dark_theme(app)
     suggestion_app = CompositionSuggestionApp()
     suggestion_app.show()
     sys.exit(app.exec_())

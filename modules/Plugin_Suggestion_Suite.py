@@ -12,6 +12,7 @@ from tkinter import messagebox
 from PyQt5 import QtWidgets
 import sys
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel, QPushButton, QLineEdit, QSpinBox
+from styles import apply_dark_theme  # Import the stylesheet function
 
 # Initialize the OpenAI client
 client = OpenAI()
@@ -31,7 +32,7 @@ def save_kontakt_library_path(kontakt_library_path):
     os.makedirs(CONFIG_FOLDER, exist_ok=True)
     with open(KONTAKT_LIBRARY_FILE, 'w') as file:
         json.dump({"kontakt_library_path": kontakt_library_path}, file)
-
+    
 def get_gpt_suggestions(user_prompt, vst_plugins, kontakt_folders, num_tracks=3):
     """Generate suggestions for new tracks using GPT based on user input and available plugins/libraries."""
     combined_prompt = (
@@ -121,46 +122,7 @@ class PluginSuggestionApp(QWidget):
         self.setFixedWidth(275)
 
         # Apply modern dark mode style
-        self.setStyleSheet("""
-            QWidget {
-                background-color: #1E1E1E;
-                color: #FFFFFF;
-                border-radius: 10px;
-            }
-            QLabel {
-                color: #FFFFFF;
-                font-size: 16px;
-                margin: 5px;
-            }
-            QPushButton {
-                background-color: #3A3A3A;
-                color: #FFFFFF;
-                border-radius: 12px;
-                padding: 4px 4px;
-                font-size: 14px;
-                border: 1px solid #5A5A5A;
-            }
-            QPushButton:hover {
-                background-color: #4A4A4A;
-            }
-            QPushButton:pressed {
-                background-color: #2A2A2A;
-            }
-            QLineEdit {
-                background-color: #2A2A2A;
-                color: #FFFFFF;
-                border-radius: 3px;
-                padding: 3px;
-                border: 1px solid #5A5A5A;
-            }
-            QSpinBox {
-                background-color: #2A2A2A;
-                color: #FFFFFF;
-                border-radius: 3px;
-                padding: 3px;
-                border: 1px solid #5A5A5A;
-            }
-        """)
+        apply_dark_theme(self)
 
         layout = QVBoxLayout(self)
 
@@ -188,6 +150,7 @@ class PluginSuggestionApp(QWidget):
 def main():
     """Main function to orchestrate the track creation workflow."""
     app = QtWidgets.QApplication(sys.argv)
+    apply_dark_theme(app)
     window = PluginSuggestionApp()
     window.show()
     sys.exit(app.exec_())

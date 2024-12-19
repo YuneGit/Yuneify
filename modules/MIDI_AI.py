@@ -8,6 +8,8 @@ import json  # For working with JSON data
 import sys  # For system-specific parameters and functions
 from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QLabel, QPushButton, QComboBox, QLineEdit
 from PyQt5.QtCore import QTimer
+from styles import apply_dark_theme  # Import the stylesheet function
+
 
 # Define a Pydantic model to represent a MIDI note
 # This model enforces the structure of a MIDI note object
@@ -37,52 +39,7 @@ class AIOrchestrationStyleSelector(QWidget):
         self.setFixedWidth(275)
 
         # Apply modern dark mode style
-        self.setStyleSheet("""
-            QWidget {
-                background-color: #1E1E1E;
-                color: #FFFFFF;
-                border-radius: 10px;
-            }
-            QLabel {
-                color: #FFFFFF;
-                font-size: 16px;
-                margin: 5px;
-            }
-            QPushButton {
-                background-color: #3A3A3A;
-                color: #FFFFFF;
-                border-radius: 12px;
-                padding: 4px 4px;
-                font-size: 14px;
-                border: 1px solid #5A5A5A;
-            }
-            QPushButton:hover {
-                background-color: #4A4A4A;
-            }
-            QPushButton:pressed {
-                background-color: #2A2A2A;
-            }
-            QComboBox {
-                background-color: #3A3A3A;
-                color: #FFFFFF;
-                border-radius: 3px;
-                padding: 3px;
-                border: 1px solid #5A5A5A;
-            }
-            QComboBox QAbstractItemView {
-                background-color: #2A2A2A;
-                color: #FFFFFF;
-                selection-background-color: #4A4A4A;
-            }
-            QLineEdit {
-                background-color: #2A2A2A;
-                color: #FFFFFF;
-                border-radius: 3px;
-                padding: 3px;
-                border: 1px solid #5A5A5A;
-            }
-        """)
-
+        apply_dark_theme(self)
         layout = QVBoxLayout()
 
         # Label

@@ -5,6 +5,7 @@ from PyQt5.QtWidgets import (
 )
 from PyQt5.QtCore import QTimer, QThread, pyqtSignal
 import reapy
+from styles import apply_dark_theme  # Import the stylesheet function
 
 class TrackProcessingThread(QThread):
     tracks_processed = pyqtSignal(list)
@@ -19,7 +20,6 @@ class TrackProcessingThread(QThread):
     def process_tracks(self, tracks):
         # Implement track processing logic here
         return tracks
-
 class TrackRouter(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -30,60 +30,8 @@ class TrackRouter(QMainWindow):
         self.setFixedWidth(275)
         
         # Apply modern dark mode style
-        self.setStyleSheet("""
-            QMainWindow, QWidget {
-                background-color: #1E1E1E;
-                color: #FFFFFF;
-                border-radius: 10px;
-            }
-            QLabel {
-                color: #FFFFFF;
-                font-size: 13px;
-                margin: 0px;
-            }
-            QPushButton {
-                background-color: #3A3A3A;
-                color: #FFFFFF;
-                border-radius: 8px;
-                padding: 4px 4px;
-                font-size: 14px;
-                border: 1px solid #5A5A5A;
-            }
-            QPushButton:hover {
-                background-color: #4A4A4A;
-            }
-            QPushButton:pressed {
-                background-color: #2A2A2A;
-            }
-            QListWidget {
-                background-color: #2A2A2A;
-                border: 1px solid #5A5A5A;
-                border-radius: 5px;
-                padding: 2px;
-                font-size: 12px;
-            }
-            QListWidget::item {
-                padding: 1px;
-                border-radius: 3px;
-            }
-            QListWidget::item:selected {
-                background-color: #4A4A4A;
-            }
-            QComboBox {
-                background-color: #3A3A3A;
-                color: #FFFFFF;
-                border-radius: 1px;
-                padding: 3px;
-                border: 1px solid #5A5A5A;
-                min-width: 20px;
-                font-size: 13px;
-            }
-            QComboBox QAbstractItemView {
-                background-color: #2A2A2A;
-                color: #FFFFFF;
-                selection-background-color: #4A4A4A;
-            }
-        """)
+        apply_dark_theme(self)
+        
         # Main layout
         main_layout = QHBoxLayout()
         
@@ -156,7 +104,6 @@ class TrackRouter(QMainWindow):
                 new_sends.add(f"→ {dest_name}")
                 for source_name in source_names:
                     new_sends.add(f"    {source_name}")
-            
             if current_sends != new_sends:
                 self.sends_list.clear()
                 for send in new_sends:
@@ -238,7 +185,7 @@ class TrackRouter(QMainWindow):
     def update_ui_with_tracks(self, tracks):
         # Update the UI with processed track data
         ...
-
+    
 def main():
     app = QApplication(sys.argv)
     window = TrackRouter()

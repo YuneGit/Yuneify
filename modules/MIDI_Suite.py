@@ -6,6 +6,8 @@ from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QVBoxLayout,
 from PyQt5.QtCore import Qt
 from reapy import reascript_api as RPR
 import statistics
+from styles import apply_dark_theme  # Import the stylesheet function
+
 
 class MidiSuite(QMainWindow):
     def __init__(self):
@@ -14,46 +16,8 @@ class MidiSuite(QMainWindow):
         self.setGeometry(100, 100, 275, 275)
         self.setFixedWidth(275)
 
-        # Apply modern dark mode style
-        self.setStyleSheet("""
-            QMainWindow, QWidget {
-                background-color: #1E1E1E;
-                color: #FFFFFF;
-                border-radius: 10px;
-            }
-            QLabel {
-                color: #FFFFFF;
-                font-size: 16px;
-                margin: 0px;
-            }
-            QPushButton {
-                background-color: #3A3A3A;
-                color: #FFFFFF;
-                border-radius: 12px;
-                padding: 4px 4px;
-                font-size: 14px;
-                border: 1px solid #5A5A5A;
-            }
-            QPushButton:hover {
-                background-color: #4A4A4A;
-            }
-            QPushButton:pressed {
-                background-color: #2A2A2A;
-            }
-            QComboBox {
-                background-color: #3A3A3A;
-                color: #FFFFFF;
-                border-radius: 3px;
-                padding: 3px;
-                border: 1px solid #5A5A5A;
-            }
-            QComboBox QAbstractItemView {
-                background-color: #2A2A2A;
-                color: #FFFFFF;
-                selection-background-color: #4A4A4A;
-            }
-        """)
-        
+        apply_dark_theme(self)
+                
         # Initialize the main widget and layout
         self.main_widget = QWidget(self)
         self.setCentralWidget(self.main_widget)

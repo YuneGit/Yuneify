@@ -4,6 +4,7 @@ from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QPu
 from PyQt5.QtGui import QPen, QColor
 from PyQt5.QtCore import Qt, QTimer, QThread, pyqtSignal, QObject
 from modules.AI_composition_review import MidiNote  # Corrected import path
+from styles import apply_dark_theme  # Import the stylesheet function
 
 class MidiWorker(QObject):
     notes_ready = pyqtSignal(list)
@@ -54,47 +55,7 @@ class MidiVisualizer(QWidget):
         self.setWindowTitle('MIDI Visualizer')
         self.setFixedSize(800, 600)
 
-        self.setStyleSheet("""
-            QWidget {
-                background-color: #1E1E1E;
-                color: #FFFFFF;
-                border-radius: 10px;
-            }
-            QPushButton#visualizeButton {
-                background-color: #3A3A3A;
-                color: #FFFFFF;
-                border-radius: 12px;
-                padding: 4px 4px;
-                font-size: 14px;
-                border: 1px solid #5A5A5A;
-            }
-            QPushButton#visualizeButton:hover {
-                background-color: #4A4A4A;
-            }
-            QPushButton#visualizeButton:pressed {
-                background-color: #2A2A2A;
-            }
-            QPushButton#zoomButton {
-                background-color: #3A3A3A;
-                border-radius: 2px;
-                min-width: 7px;
-                min-height: 7px;
-                max-width: 7px;
-                max-height: 7px;
-            }
-            QPushButton#zoomButton:hover {
-                background-color: #4A4A4A;
-            }
-            QPushButton#zoomButton:pressed {
-                background-color: #2A2A2A;
-            }
-            QLabel#instructions {
-                color: #AAAAAA;
-                font-size: 12px;
-                margin: 5px;
-            }
-        """)
-
+        apply_dark_theme(self)
         main_layout = QVBoxLayout()
 
         self.visualize_button = QPushButton('Visualize MIDI', self)
