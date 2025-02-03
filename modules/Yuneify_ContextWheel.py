@@ -11,6 +11,8 @@ import json
 from modules.PRINT import create_print_tracks
 from modules.Height_Lock import TrackHeightLock
 from modules.Auto_VST_Window import FloatingFXController
+from modules.utils import setup_logger
+
 
 class MouseFilter(QObject):
     def __init__(self, window):
@@ -27,6 +29,9 @@ class ContextWheel(QMainWindow):
 
     def __init__(self, actions, show_navigation=False, navigate_next=None, navigate_prev=None):
         super().__init__()
+        self.logger = setup_logger('ContextWheel', 'context_wheel')
+        self.logger.info("ContextWheel initialized with actions: %s", actions)
+
         self.setup_window()
         self.show_signal.connect(self.show_at_cursor)
 
@@ -107,9 +112,12 @@ class ContextWheel(QMainWindow):
     def button_action(self, callback):
         try:
             print(f"Button pressed, executing callback: {callback.__name__}")
+            self.logger.info("Executing callback: %s", callback.__name__)
             callback()
+
         except Exception as e:
             print(f"Error executing callback: {e}")
+            self.logger.error("Error executing callback: %s", e)
         self.hide()
 
     def add_hide_button(self):
@@ -205,7 +213,7 @@ def load_keybinds():
         }
 
 def main():
-    app = QApplication(sys.argv)
+    app = QApplication.instance() or QApplication(sys.argv)
 
     # Load keybinds
     keybinds = load_keybinds()
@@ -257,7 +265,7 @@ def main():
     keyboard.add_hotkey(keybinds['send_manager'], lambda: send_manager_wheel.show_signal.emit())
     keyboard.add_hotkey(keybinds['midi_suite'], lambda: midi_suite_wheel.show_signal.emit())
 
-    sys.exit(app.exec_())
+    app.exec_()
 
 if __name__ == "__main__":
     main() 

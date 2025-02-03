@@ -8,7 +8,7 @@ import json  # For working with JSON data
 import sys  # For system-specific parameters and functions
 from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QLabel, QPushButton, QComboBox, QLineEdit
 from PyQt5.QtCore import QTimer
-from styles import apply_dark_theme  # Import the stylesheet function
+from modules.styles import apply_dark_theme  # Import the stylesheet function
 
 
 # Define a Pydantic model to represent a MIDI note

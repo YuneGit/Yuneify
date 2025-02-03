@@ -2,7 +2,7 @@ import reapy
 import sys
 from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QGridLayout, QWidget, QLabel, QComboBox
 from PyQt5.QtCore import Qt
-from styles import apply_dark_theme  # Import the stylesheet function
+from modules.styles import apply_dark_theme  # Import the stylesheet function
 
 class TrackControlApp(QMainWindow):
     def __init__(self):

@@ -1,0 +1,5 @@
+# Build Yuneify.exe
+pyinstaller --onefile --noconsole --paths "C:\Users\noah0\AppData\Roaming\REAPER\Scripts\Yuneify" --add-data "C:\Users\noah0\AppData\Roaming\REAPER\Scripts\Yuneify\config files\keybinds.json;config files" --add-data "C:\Users\noah0\AppData\Roaming\REAPER\Scripts\Yuneify\dependencies\TwitchLogo.png;dependencies" --collect-submodules Yuneify "C:\Users\noah0\AppData\Roaming\REAPER\Scripts\Yuneify\Yuneify.py"
+
+# Build Yuneify_AI.exe
+pyinstaller --onefile --noconsole --paths "C:\Users\noah0\AppData\Roaming\REAPER\Scripts\Yuneify" --add-data "C:\Users\noah0\AppData\Roaming\REAPER\Scripts\Yuneify\config files\keybinds.json;config files" --add-data "C:\Users\noah0\AppData\Roaming\REAPER\Scripts\Yuneify\dependencies\TwitchLogo.png;dependencies" --collect-submodules Yuneify "C:\Users\noah0\AppData\Roaming\REAPER\Scripts\Yuneify\Yuneify_AI.py"

@@ -1,3 +1,7 @@
 # Ignore Python cache directories
 __pycache__/
 *.pyc
+/build
+/dist
+*.spec
+*.log

@@ -6,10 +6,14 @@ import os
 from PyQt5.QtWidgets import QApplication, QMainWindow, QLabel, QVBoxLayout, QWidget, QPushButton, QLineEdit, QFormLayout, QHBoxLayout
 from PyQt5.QtGui import QPixmap, QKeySequence
 from PyQt5.QtCore import Qt
+from modules.utils import setup_logger
 
 class KeybindUI(QWidget):
     def __init__(self, main_menu):
         super().__init__(main_menu)
+        self.logger = setup_logger('KeybindUI', 'keybind_ui')
+        self.logger.info("KeybindUI initialized.")
+
         self.main_menu = main_menu
         self.setStyleSheet("background-color: #1E1E1E; color: #E0E0E0;")
 
@@ -51,6 +55,7 @@ class KeybindUI(QWidget):
         save_button.setStyleSheet("background-color: #4A4A4A; color: #FFFFFF; border-radius: 5px; padding: 5px;")
         save_button.clicked.connect(self.save_keybinds)
         vertical_layout.addWidget(save_button)
+        
 
         reset_button = QPushButton("Reset Keybinds", self)
         reset_button.setStyleSheet("background-color: #4A4A4A; color: #FFFFFF; border-radius: 5px; padding: 5px;")
@@ -115,6 +120,7 @@ class KeybindUI(QWidget):
             self.keybinds[action] = input_field.text()
         with open(keybind_file, 'w') as file:
             json.dump(self.keybinds, file)
+        self.logger.info("Keybinds saved: %s", self.keybinds)
 
     def reset_keybinds(self):
         default_keybinds = {
@@ -126,6 +132,7 @@ class KeybindUI(QWidget):
             self.keybind_inputs[action].setText(keybind)
         self.keybinds = default_keybinds
         self.save_keybinds()
+        self.logger.info("Keybinds reset to defaults.")
 
 def main():
     app = QApplication(sys.argv)

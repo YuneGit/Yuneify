@@ -4,7 +4,7 @@ from openai import OpenAI
 from pydantic import BaseModel
 import sys
 from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QLabel, QPushButton, QLineEdit, QScrollArea, QFileDialog, QTabWidget
-from styles import apply_dark_theme  # Import the stylesheet function
+from modules.styles import apply_dark_theme  # Import the stylesheet function
 
 # Define a Pydantic model to represent a MIDI note
 class MidiNote(BaseModel):

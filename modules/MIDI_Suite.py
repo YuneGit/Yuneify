@@ -6,7 +6,7 @@ from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QVBoxLayout,
 from PyQt5.QtCore import Qt
 from reapy import reascript_api as RPR
 import statistics
-from styles import apply_dark_theme  # Import the stylesheet function
+from modules.styles import apply_dark_theme  # Import the stylesheet function
 
 
 class MidiSuite(QMainWindow):

@@ -4,7 +4,7 @@ from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QPu
 from PyQt5.QtGui import QPen, QColor
 from PyQt5.QtCore import Qt, QTimer, QThread, pyqtSignal, QObject
 from modules.AI_composition_review import MidiNote  # Corrected import path
-from styles import apply_dark_theme  # Import the stylesheet function
+from modules.styles import apply_dark_theme  # Import the stylesheet function
 
 class MidiWorker(QObject):
     notes_ready = pyqtSignal(list)

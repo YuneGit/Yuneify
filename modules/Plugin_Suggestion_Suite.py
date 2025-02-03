@@ -12,7 +12,7 @@ from tkinter import messagebox
 from PyQt5 import QtWidgets
 import sys
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel, QPushButton, QLineEdit, QSpinBox
-from styles import apply_dark_theme  # Import the stylesheet function
+from modules.styles import apply_dark_theme  # Import the stylesheet function
 
 # Initialize the OpenAI client
 client = OpenAI()

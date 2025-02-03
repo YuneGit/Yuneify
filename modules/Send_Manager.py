@@ -5,7 +5,7 @@ from PyQt5.QtWidgets import (
 )
 from PyQt5.QtCore import QTimer, QThread, pyqtSignal
 import reapy
-from styles import apply_dark_theme  # Import the stylesheet function
+from modules.styles import apply_dark_theme  # Import the stylesheet function
 
 class TrackProcessingThread(QThread):
     tracks_processed = pyqtSignal(list)
