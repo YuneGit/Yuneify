@@ -1,4 +1,5 @@
 # Ignore Python cache directories
+/venv
 __pycache__/
 *.pyc
 /build

@@ -1,13 +1,13 @@
 import reapy
 import sys
-from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QGraphicsView, QGraphicsScene, QGraphicsLineItem, QLabel
-from PyQt5.QtGui import QPen, QColor
-from PyQt5.QtCore import Qt, QTimer, QThread, pyqtSignal, QObject
+from PySide6.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QGraphicsView, QGraphicsScene, QGraphicsLineItem, QLabel
+from PySide6.QtGui import QPen, QColor
+from PySide6.QtCore import Qt, QTimer, QThread, Signal, QObject
 from modules.AI_composition_review import MidiNote  # Corrected import path
 from modules.styles import apply_dark_theme  # Import the stylesheet function
 
 class MidiWorker(QObject):
-    notes_ready = pyqtSignal(list)
+    notes_ready = Signal(list)
 
     def fetch_notes(self):
         project = reapy.Project()
@@ -186,7 +186,7 @@ class CustomGraphicsView(QGraphicsView):
             self.scale(factor, factor)  # Uniform zoom
 
 if __name__ == "__main__":
-    app = QApplication(sys.argv)
+    app = QApplication([])
     visualizer = MidiVisualizer()
     visualizer.show()
     sys.exit(app.exec_()) 

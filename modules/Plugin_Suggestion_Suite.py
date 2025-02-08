@@ -9,9 +9,9 @@ from dependencies.insert_Kontakt_Track import add_track_with_kontakt
 from dependencies import insert_Track
 import tkinter as tk
 from tkinter import messagebox
-from PyQt5 import QtWidgets
+from PySide6 import QtWidgets
 import sys
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel, QPushButton, QLineEdit, QSpinBox
+from PySide6.QtWidgets import QWidget, QVBoxLayout, QLabel, QPushButton, QLineEdit, QSpinBox
 from modules.styles import apply_dark_theme  # Import the stylesheet function
 
 # Initialize the OpenAI client
@@ -149,7 +149,7 @@ class PluginSuggestionApp(QWidget):
 
 def main():
     """Main function to orchestrate the track creation workflow."""
-    app = QtWidgets.QApplication(sys.argv)
+    app = QtWidgets.QApplication([])
     apply_dark_theme(app)
     window = PluginSuggestionApp()
     window.show()

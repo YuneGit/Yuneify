@@ -3,7 +3,7 @@ import json
 from openai import OpenAI
 from pydantic import BaseModel
 import sys
-from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QLabel, QPushButton, QLineEdit, QScrollArea, QFileDialog, QTabWidget
+from PySide6.QtWidgets import QApplication, QWidget, QVBoxLayout, QLabel, QPushButton, QLineEdit, QScrollArea, QFileDialog, QTabWidget
 from modules.styles import apply_dark_theme  # Import the stylesheet function
 
 # Define a Pydantic model to represent a MIDI note
@@ -256,7 +256,7 @@ class AICompositionSuggester:
         return completion.choices[0].message.content.strip()
 
 if __name__ == "__main__":
-    app = QApplication(sys.argv)
+    app = QApplication([])
     apply_dark_theme(app)
     suggestion_app = CompositionSuggestionApp()
     suggestion_app.show()

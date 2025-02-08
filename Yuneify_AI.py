@@ -1,6 +1,6 @@
 import sys
-from PyQt5.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QWidget, QSplitter
-from PyQt5.QtCore import Qt
+from PySide6.QtWidgets import QApplication, QMainWindow, QVBoxLayout, QWidget, QSplitter
+from PySide6.QtCore import Qt
 from modules.MIDI_Visualizer import MidiVisualizer
 from modules.MIDI_AI import AIOrchestrationStyleSelector
 from modules.AI_composition_review import CompositionSuggestionApp
@@ -52,7 +52,7 @@ if __name__ == "__main__":
       # Check if a QApplication instance already exists
       app = QApplication.instance()
       if app is None:
-          app = QApplication(sys.argv)
+          app = QApplication([])
       logger = setup_logger('MainApplication', 'main_application.log')
       logger.info("Starting application.")
       

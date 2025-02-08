@@ -1,11 +1,9 @@
-# UI.py
-
 import sys
 import json
 import os
-from PyQt5.QtWidgets import QApplication, QMainWindow, QLabel, QVBoxLayout, QWidget, QPushButton, QLineEdit, QFormLayout, QHBoxLayout
-from PyQt5.QtGui import QPixmap, QKeySequence
-from PyQt5.QtCore import Qt
+from PySide6.QtWidgets import QApplication, QMainWindow, QLabel, QVBoxLayout, QWidget, QPushButton, QLineEdit, QFormLayout, QHBoxLayout
+from PySide6.QtGui import QPixmap, QKeySequence
+from PySide6.QtCore import Qt
 from modules.utils import setup_logger
 
 class KeybindUI(QWidget):
@@ -135,7 +133,7 @@ class KeybindUI(QWidget):
         self.logger.info("Keybinds reset to defaults.")
 
 def main():
-    app = QApplication(sys.argv)
+    app = QApplication([])
     window = KeybindUI()
     window.show()
     sys.exit(app.exec_())

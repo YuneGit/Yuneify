@@ -1,9 +1,9 @@
 import sys
 import math
 import keyboard
-from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QVBoxLayout, QWidget, QSizePolicy
-from PyQt5.QtCore import Qt, QPoint, pyqtSignal, QObject, QEvent, QThread
-from PyQt5.QtGui import QPainter, QColor, QPen, QCursor
+from PySide6.QtWidgets import QApplication, QMainWindow, QPushButton, QVBoxLayout, QWidget, QSizePolicy
+from PySide6.QtCore import Qt, QPoint, Signal, QObject, QEvent, QThread
+from PySide6.QtGui import QPainter, QColor, QPen, QCursor
 from modules.State_Suite import TrackControlApp
 from modules.MIDI_Suite import MidiSuite
 from modules.Send_Manager import TrackRouter
@@ -25,7 +25,7 @@ class MouseFilter(QObject):
         return super().eventFilter(obj, event)
 
 class ContextWheel(QMainWindow):
-    show_signal = pyqtSignal()
+    show_signal = Signal()
 
     def __init__(self, actions, show_navigation=False, navigate_next=None, navigate_prev=None):
         super().__init__()
@@ -213,7 +213,7 @@ def load_keybinds():
         }
 
 def main():
-    app = QApplication.instance() or QApplication(sys.argv)
+    app = QApplication.instance() or QApplication([])
 
     # Load keybinds
     keybinds = load_keybinds()

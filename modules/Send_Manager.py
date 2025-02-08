@@ -1,14 +1,14 @@
 import sys
-from PyQt5.QtWidgets import (
+from PySide6.QtWidgets import (
     QApplication, QMainWindow, QVBoxLayout, QWidget, QPushButton, 
     QLabel, QComboBox, QListWidget, QHBoxLayout, QListWidgetItem
 )
-from PyQt5.QtCore import QTimer, QThread, pyqtSignal
+from PySide6.QtCore import QTimer, QThread, Signal
 import reapy
 from modules.styles import apply_dark_theme  # Import the stylesheet function
 
 class TrackProcessingThread(QThread):
-    tracks_processed = pyqtSignal(list)
+    tracks_processed = Signal(list)
 
     def run(self):
         project = reapy.Project()
@@ -187,7 +187,7 @@ class TrackRouter(QMainWindow):
         ...
     
 def main():
-    app = QApplication(sys.argv)
+    app = QApplication([])
     window = TrackRouter()
     window.show()
     sys.exit(app.exec_())

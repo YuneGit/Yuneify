@@ -2,8 +2,8 @@ import sys
 import reapy
 import time
 import random
-from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QVBoxLayout, QWidget, QSpinBox, QLabel, QComboBox, QGridLayout
-from PyQt5.QtCore import Qt
+from PySide6.QtWidgets import QApplication, QMainWindow, QPushButton, QVBoxLayout, QWidget, QSpinBox, QLabel, QComboBox, QGridLayout
+from PySide6.QtCore import Qt
 from reapy import reascript_api as RPR
 import statistics
 from modules.styles import apply_dark_theme  # Import the stylesheet function
@@ -544,7 +544,7 @@ class MidiLegatoMaker(MidiOperationBase):
             print(f"Adjusted note (Pitch: {current_note.pitch}) to end at PPQ: {new_end}.")
 
 def main():
-    app = QApplication(sys.argv)
+    app = QApplication([])
     window = MidiSuite()
     window.show()
     sys.exit(app.exec_())

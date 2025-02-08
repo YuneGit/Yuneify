@@ -6,8 +6,8 @@ from pydantic import BaseModel  # Library for data validation and parsing
 from openai import OpenAI
 import json  # For working with JSON data
 import sys  # For system-specific parameters and functions
-from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QLabel, QPushButton, QComboBox, QLineEdit
-from PyQt5.QtCore import QTimer
+from PySide6.QtWidgets import QApplication, QWidget, QVBoxLayout, QLabel, QPushButton, QComboBox, QLineEdit
+from PySide6.QtCore import QTimer
 from modules.styles import apply_dark_theme  # Import the stylesheet function
 
 
@@ -169,7 +169,7 @@ class AIMidiOrchestrator:
 
 # Entry point of the script
 if __name__ == "__main__":
-    app = QApplication(sys.argv)
+    app = QApplication([])
     style_selector = AIOrchestrationStyleSelector()
     style_selector.show()
     sys.exit(app.exec_())

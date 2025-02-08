@@ -1,7 +1,7 @@
-from PyQt5.QtWidgets import QApplication
+from PySide6.QtWidgets import QApplication
 
 def apply_dark_theme(app):
-    """Applies a consistent dark theme the PyQt5 application."""
+    """Applies a consistent dark theme the PySide6 application."""
     app.setStyleSheet("""
        QMainWindow, QWidget {
            background-color: #1E1E1E;

@@ -2,7 +2,7 @@ import reapy  # A Python library for interacting with REAPER DAW using ReaScript
 import keyboard  # A library for detecting keyboard input in Python
 from pynput import mouse  # Library for detecting mouse events
 import time  # Used for creating a small delay in the code loop
-from PyQt5.QtCore import QTimer
+from PySide6.QtCore import QTimer
 
 class FloatingFXController:
     def __init__(self):

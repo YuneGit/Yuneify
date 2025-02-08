@@ -1,7 +1,7 @@
 import reapy
 import sys
-from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QGridLayout, QWidget, QLabel, QComboBox
-from PyQt5.QtCore import Qt
+from PySide6.QtWidgets import QApplication, QMainWindow, QPushButton, QGridLayout, QWidget, QLabel, QComboBox
+from PySide6.QtCore import Qt
 from modules.styles import apply_dark_theme  # Import the stylesheet function
 
 class TrackControlApp(QMainWindow):
@@ -201,7 +201,7 @@ class TrackControlApp(QMainWindow):
                 print(f"Unmuted parent track: {parent_track.name}")
 
 if __name__ == "__main__":
-    app = QApplication(sys.argv)
+    app = QApplication([])
     apply_dark_theme(app)
     window = TrackControlApp()
     window.show()

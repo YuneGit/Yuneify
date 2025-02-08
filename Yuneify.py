@@ -1,8 +1,8 @@
 import sys
 import os
-from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QVBoxLayout, QWidget, QStackedWidget, QLabel, QHBoxLayout, QTextBrowser
-from PyQt5.QtCore import Qt, QThread, pyqtSignal, QTimer
-from PyQt5.QtGui import QPixmap
+from PySide6.QtWidgets import QApplication, QMainWindow, QPushButton, QVBoxLayout, QWidget, QStackedWidget, QLabel, QHBoxLayout, QTextBrowser
+from PySide6.QtCore import Qt, QThread, Signal, QTimer
+from PySide6.QtGui import QPixmap
 from modules.Yuneify_Settings import KeybindUI
 from modules.Yuneify_ContextWheel import main as context_wheel_main
 from Yuneify_AI import MainApplication as yuneify_ai_main
@@ -15,7 +15,7 @@ def initialize_logger():
     return setup_logger('Yuneify', 'yuneify')
 
 class DebugThread(QThread):
-    log_signal = pyqtSignal(str)
+    log_signal = Signal(str)
 
     def __init__(self):
         super().__init__()
@@ -190,7 +190,7 @@ class MainMenu(QMainWindow):
 
 def main():
     logger = initialize_logger()
-    app = QApplication(sys.argv)
+    app = QApplication([])
     window = MainMenu(logger)
     window.show()
     sys.exit(app.exec_())
