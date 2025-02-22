@@ -12,7 +12,7 @@ from modules.PRINT import create_print_tracks
 from modules.Height_Lock import TrackHeightLock
 from modules.Auto_VST_Window import FloatingFXController
 from modules.utils import setup_logger
-
+from modules.Insert_Kontakt_Track import create_vst_preset_manager
 
 class MouseFilter(QObject):
     def __init__(self, window):
@@ -240,6 +240,7 @@ def main():
         ("Remove Send", track_router.remove_send),
         ("Toggle Height Lock", lambda: send_manager_wheel.toggle_height_lock()),
         ("Toggle Auto VST Window", lambda: send_manager_wheel.toggle_auto_vst_window()),
+        ("VST Presets", create_vst_preset_manager),  # Directly reference the function
         ("Print Tracks", create_print_tracks)
     ]
 
@@ -266,6 +267,6 @@ def main():
     keyboard.add_hotkey(keybinds['midi_suite'], lambda: midi_suite_wheel.show_signal.emit())
 
     app.exec_()
-
+    
 if __name__ == "__main__":
     main() 

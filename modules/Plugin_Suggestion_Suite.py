@@ -5,7 +5,7 @@ from openai import OpenAI
 import reapy
 from dependencies.list_Kontakt_VST import get_folder_names
 from dependencies.list_VST import get_vst_plugins
-from dependencies.insert_Kontakt_Track import add_track_with_kontakt
+from modules.Insert_Kontakt_Track import add_track_with_kontakt
 from dependencies import insert_Track
 import tkinter as tk
 from tkinter import messagebox
