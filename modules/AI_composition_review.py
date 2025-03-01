@@ -1,12 +1,13 @@
 import reapy
 import json
-from openai import OpenAI
+import os
+import time
 from pydantic import BaseModel
+from modules.ai_models import get_model_handler, AIModelError
 import sys
 from PySide6.QtWidgets import QApplication, QWidget, QVBoxLayout, QLabel, QPushButton, QLineEdit, QScrollArea, QFileDialog, QTabWidget
 from modules.styles import apply_dark_theme  # Import the stylesheet function
 
-# Define a Pydantic model to represent a MIDI note
 class MidiNote(BaseModel):
     start: float
     end: float
@@ -25,30 +26,26 @@ class CompositionSuggestionApp(QWidget):
     def initUI(self):
         self.setWindowTitle('Composition Suggestion')
         self.setFixedSize(400, 300)
-
         apply_dark_theme(self)
 
         layout = QVBoxLayout()
-
         self.tabs = QTabWidget(self)
         self.tabs.addTab(self.createChordTab(), "Chord Development")
         self.tabs.addTab(self.createMelodyTab(), "Melody Development")
         self.tabs.addTab(self.createAnalysisTab(), "MIDI Analysis")
         self.tabs.addTab(self.createSimilarityTab(), "Similarity Check")
-
         layout.addWidget(self.tabs)
 
-        # Create labels for each tab to display suggestions
+        # Create and add feedback labels
         self.chord_feedback_label = QLabel('', self)
-        self.chord_feedback_label.setWordWrap(True)
         self.melody_feedback_label = QLabel('', self)
-        self.melody_feedback_label.setWordWrap(True)
         self.analysis_feedback_label = QLabel('', self)
-        self.analysis_feedback_label.setWordWrap(True)
         self.similarity_feedback_label = QLabel('', self)
-        self.similarity_feedback_label.setWordWrap(True)
+        
+        for label in [self.chord_feedback_label, self.melody_feedback_label,
+                     self.analysis_feedback_label, self.similarity_feedback_label]:
+            label.setWordWrap(True)
 
-        # Add feedback labels to each tab
         self.chord_tab.layout().addWidget(self.chord_feedback_label)
         self.melody_tab.layout().addWidget(self.melody_feedback_label)
         self.analysis_tab.layout().addWidget(self.analysis_feedback_label)
@@ -57,207 +54,156 @@ class CompositionSuggestionApp(QWidget):
         self.setLayout(layout)
 
     def createChordTab(self):
-        tab = QWidget()
+        self.chord_tab = QWidget()
         layout = QVBoxLayout()
-
-        self.prompt_input_chord = QLineEdit(self)
-        self.prompt_input_chord.setPlaceholderText('Enter context for chord development...')
-        layout.addWidget(self.prompt_input_chord)
-
-        self.suggest_button_chord = QPushButton('Get Chord Suggestions', self)
+        self.prompt_input_chord = QLineEdit("Enter chord context...")
+        self.suggest_button_chord = QPushButton("Get Chord Suggestions")
         self.suggest_button_chord.clicked.connect(lambda: self.on_get_suggestions('chord'))
+        layout.addWidget(QLabel("Chord Development Tools:"))
+        layout.addWidget(self.prompt_input_chord)
         layout.addWidget(self.suggest_button_chord)
-
-        tab.setLayout(layout)
-        self.chord_tab = tab  # Store reference to the tab
-        return tab
+        self.chord_tab.setLayout(layout)
+        return self.chord_tab
 
     def createMelodyTab(self):
-        tab = QWidget()
+        self.melody_tab = QWidget()
         layout = QVBoxLayout()
-
-        self.prompt_input_melody = QLineEdit(self)
-        self.prompt_input_melody.setPlaceholderText('Enter context for melody development...')
-        layout.addWidget(self.prompt_input_melody)
-
-        self.suggest_button_melody = QPushButton('Get Melody Suggestions', self)
+        self.prompt_input_melody = QLineEdit("Enter melody context...")
+        self.suggest_button_melody = QPushButton("Get Melody Suggestions")
         self.suggest_button_melody.clicked.connect(lambda: self.on_get_suggestions('melody'))
+        layout.addWidget(QLabel("Melody Development Tools:"))
+        layout.addWidget(self.prompt_input_melody)
         layout.addWidget(self.suggest_button_melody)
-
-        tab.setLayout(layout)
-        self.melody_tab = tab  # Store reference to the tab
-        return tab
+        self.melody_tab.setLayout(layout)
+        return self.melody_tab
 
     def createAnalysisTab(self):
-        tab = QWidget()
+        self.analysis_tab = QWidget()
         layout = QVBoxLayout()
-
-        self.analyze_button = QPushButton('Analyze MIDI', self)
+        self.analyze_button = QPushButton("Analyze Composition")
         self.analyze_button.clicked.connect(lambda: self.on_get_suggestions('analysis'))
+        layout.addWidget(QLabel("MIDI Analysis Tools:"))
         layout.addWidget(self.analyze_button)
-
-        tab.setLayout(layout)
-        self.analysis_tab = tab  # Store reference to the tab
-        return tab
+        self.analysis_tab.setLayout(layout)
+        return self.analysis_tab
 
     def createSimilarityTab(self):
-        tab = QWidget()
+        self.similarity_tab = QWidget()
         layout = QVBoxLayout()
-
-        self.similarity_button = QPushButton('Check Similarity', self)
+        self.similarity_button = QPushButton("Check Similarity")
         self.similarity_button.clicked.connect(lambda: self.on_get_suggestions('similarity'))
+        layout.addWidget(QLabel("Similarity Check Tools:"))
         layout.addWidget(self.similarity_button)
-
-        tab.setLayout(layout)
-        self.similarity_tab = tab  # Store reference to the tab
-        return tab
+        self.similarity_tab.setLayout(layout)
+        return self.similarity_tab
 
     def on_get_suggestions(self, mode):
-        # Disable interaction
+        # Disable UI elements
         self.tabs.setEnabled(False)
-        self.suggest_button_chord.setEnabled(False)
-        self.suggest_button_melody.setEnabled(False)
-        self.analyze_button.setEnabled(False)
-        self.similarity_button.setEnabled(False)
+        for btn in [self.suggest_button_chord, self.suggest_button_melody,
+                   self.analyze_button, self.similarity_button]:
+            btn.setEnabled(False)
 
-        if mode == 'chord':
-            custom_context = self.prompt_input_chord.text()
-            self.chord_feedback_label.setText("Generating suggestions...")
-        elif mode == 'melody':
-            custom_context = self.prompt_input_melody.text()
-            self.melody_feedback_label.setText("Generating suggestions...")
-        elif mode == 'analysis':
-            custom_context = ''
-            self.analysis_feedback_label.setText("Generating analysis...")
-        elif mode == 'similarity':
-            custom_context = ''
-            self.similarity_feedback_label.setText("Checking similarity...")
+        # Set loading text
+        feedback_labels = {
+            'chord': self.chord_feedback_label,
+            'melody': self.melody_feedback_label,
+            'analysis': self.analysis_feedback_label,
+            'similarity': self.similarity_feedback_label
+        }
+        feedback_labels[mode].setText("Generating suggestions...")
 
-        self.composition_suggester.custom_context = custom_context
+        # Get suggestions
+        self.composition_suggester.custom_context = self.get_custom_context(mode)
         suggestions = self.composition_suggester.generate_suggestions(mode)
+        feedback_labels[mode].setText(suggestions)
 
-        if mode == 'chord':
-            self.chord_feedback_label.setText(suggestions)
-        elif mode == 'melody':
-            self.melody_feedback_label.setText(suggestions)
-        elif mode == 'analysis':
-            self.analysis_feedback_label.setText(suggestions)
-        elif mode == 'similarity':
-            self.similarity_feedback_label.setText(suggestions)
-
-        # Re-enable interaction
+        # Re-enable UI elements
         self.tabs.setEnabled(True)
-        self.suggest_button_chord.setEnabled(True)
-        self.suggest_button_melody.setEnabled(True)
-        self.analyze_button.setEnabled(True)
-        self.similarity_button.setEnabled(True)
+        for btn in [self.suggest_button_chord, self.suggest_button_melody,
+                   self.analyze_button, self.similarity_button]:
+            btn.setEnabled(True)
 
-    def save_suggestions(self):
-        suggestions = self.feedback_label.text()
-        if suggestions:
-            options = QFileDialog.Options()
-            file_name, _ = QFileDialog.getSaveFileName(self, "Save Suggestions", "", "Text Files (*.txt);;All Files (*)", options=options)
-            if file_name:
-                with open(file_name, 'w') as file:
-                    file.write(suggestions)
+    def get_custom_context(self, mode):
+        if mode == 'chord':
+            return self.prompt_input_chord.text()
+        elif mode == 'melody':
+            return self.prompt_input_melody.text()
+        return ''
 
 class AICompositionSuggester:
-    def __init__(self, custom_context=''):
+    def __init__(self, custom_context='', model_name='openai'):
         self.project = reapy.Project()
         self.custom_context = custom_context
+        self.model = get_model_handler(model_name)
 
     def generate_suggestions(self, mode):
+        try:
+            note_infos = self.get_midi_data()
+            return self._generate_suggestion(mode, note_infos)
+        except Exception as e:
+            return f"⚠️ Error: {str(e)}"
+
+    def get_midi_data(self):
         item = self.project.get_selected_item(0)
         if not item:
-            return "No selected item."
-
+            raise ValueError("No MIDI item selected")
+        
         take = item.active_take
         if not take:
-            return "No active take."
-
+            raise ValueError("No active take")
+        
         notes = take.notes
         if not notes:
-            return "No MIDI notes."
+            raise ValueError("No MIDI notes found")
+        
+        return [{
+            "start": note.start,
+            "end": note.end,
+            "pitch": note.pitch,
+            "velocity": note.velocity,
+            "channel": note.channel,
+            "selected": note.selected,
+            "muted": note.muted
+        } for note in notes]
 
-        note_infos = [note.infos for note in notes]
-        if mode == 'chord':
-            return self.send_notes_to_chatgpt(note_infos, "chord")
-        elif mode == 'melody':
-            return self.send_notes_to_chatgpt(note_infos, "melody")
-        elif mode == 'analysis':
-            return self.analyze_midi(note_infos)
-        elif mode == 'similarity':
-            return self.check_similarity(note_infos)
+    def _generate_suggestion(self, mode: str, midi_data: dict) -> str:
+        prompts = {
+            'chord': {
+                'system': "Music theory expert analyzing chord progressions",
+                'user': "Suggest 3 chord progression options using Roman numerals and specific voicings."
+            },
+            'melody': {
+                'system': "Music composition expert developing melodies",
+                'user': "Suggest 3 melodic development options with interval relationships."
+            },
+            'analysis': {
+                'system': "Music analyst examining structural elements",
+                'user': "Analyze key/mode, chords, contour, and rhythm patterns."
+            },
+            'similarity': {
+                'system': "Musicologist comparing to known works",
+                'user': "Identify similarities in motifs, harmony, rhythm, and genre."
+            }
+        }
 
-    def send_notes_to_chatgpt(self, note_infos, mode):
-        midi_data = json.dumps(note_infos, default=str)
-        if mode == 'chord':
-            prompt = (
-                "Given the following MIDI notes, provide chord progression ideas. "
-                "List specific chord sequences like 'Cmaj - Fmaj - Gmaj' that can be directly applied."
+        try:
+            response = self.model.generate_text(
+                system_prompt=prompts[mode]['system'],
+                user_prompt=f"{self.custom_context}\n{prompts[mode]['user']}",
+                midi_data=midi_data,
+                temperature=0.6,
+                max_tokens=400
             )
-        elif mode == 'melody':
-            prompt = (
-                "Given the following MIDI notes, provide direct suggestions to continue the melody. "
-                "Use note names or concepts that can be directly applied."
-            )
-        
-        client = OpenAI()
-
-        completion = client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[
-                {"role": "system", "content": "Provide practical suggestions without introductions."},
-                {"role": "user", "content": f"{prompt}\n{midi_data}"},
-            ],
-            max_tokens=150  # Adjust this value to control the length of the response
-        )
-
-        return completion.choices[0].message.content.strip()
-
-    def analyze_midi(self, note_infos):
-        midi_data = json.dumps(note_infos, default=str)
-        prompt = (
-            "Analyze the following MIDI notes and provide a brief summary of the key musical elements. "
-            "Focus on the main chords, melody, and rhythm patterns."
-        )
-        
-        client = OpenAI()
-
-        completion = client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[
-                {"role": "system", "content": "Provide practical suggestions without introductions."},
-                {"role": "user", "content": f"{prompt}\n{midi_data}"},
-            ],
-            max_tokens=150  # Adjust this value to control the length of the response
-        )
-
-        return completion.choices[0].message.content.strip()
-
-    def check_similarity(self, note_infos):
-        midi_data = json.dumps(note_infos, default=str)
-        prompt = (
-            "Given the following MIDI notes, identify any similarities to well-known songs or themes. "
-            "Provide a list of songs or themes that are similar in melody, harmony, or rhythm."
-        )
-        
-        client = OpenAI()
-
-        completion = client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[
-                {"role": "system", "content": "Provide practical suggestions without introductions."},
-                {"role": "user", "content": f"{prompt}\n{midi_data}"},
-            ],
-            max_tokens=150  # Adjust this value to control the length of the response
-        )
-
-        return completion.choices[0].message.content.strip()
+            return f"```markdown\n{response}\n```"
+        except AIModelError as e:
+            return f"⚠️ AI Error: {str(e)}"
+        except NotImplementedError as e:
+            return f"⚠️ Model not supported: {str(e)}"
 
 if __name__ == "__main__":
     app = QApplication([])
     apply_dark_theme(app)
     suggestion_app = CompositionSuggestionApp()
     suggestion_app.show()
-    sys.exit(app.exec_())
+    sys.exit(app.exec())

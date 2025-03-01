@@ -2,10 +2,11 @@ import sys
 import math
 import keyboard
 from PySide6.QtWidgets import QApplication, QMainWindow, QPushButton, QVBoxLayout, QWidget, QSizePolicy
-from PySide6.QtCore import Qt, QPoint, Signal, QObject, QEvent, QThread
+from PySide6.QtCore import Qt, QPoint, Signal, QObject, QEvent, QThread, QTimer
 from PySide6.QtGui import QPainter, QColor, QPen, QCursor
 from modules.State_Suite import TrackControlApp
 from modules.MIDI_Suite import MidiSuite
+from Fast_MIDI_Suite import FastMidiSuite
 from modules.Send_Manager import TrackRouter
 import json
 from modules.PRINT import create_print_tracks
@@ -13,6 +14,7 @@ from modules.Height_Lock import TrackHeightLock
 from modules.Auto_VST_Window import FloatingFXController
 from modules.utils import setup_logger
 from modules.Insert_Kontakt_Track import create_vst_preset_manager
+from modules.Marker_Manager import MarkerAdjustWindow
 
 class MouseFilter(QObject):
     def __init__(self, window):
@@ -24,14 +26,47 @@ class MouseFilter(QObject):
             self.window.hide()
         return super().eventFilter(obj, event)
 
+class SubButton(QPushButton):
+    def __init__(self, label, callback, parent=None):
+        super().__init__(label, parent)
+        self.callback = callback
+        self.setStyleSheet("""
+            QPushButton {
+                background-color: #3A3A3A;
+                color: #E0E0E0;
+                padding: 5px;
+                font-size: 12px;
+                border: 1px solid #444444;
+                border-radius: 3px;
+                margin: 2px;
+            }
+            QPushButton:hover {
+                background-color: #4A4A4A;
+            }
+        """)
+        self.clicked.connect(self.execute)
+        self.hide()
+
+    def execute(self):
+        self.callback()
+        self.parent().hide()
+
 class ContextWheel(QMainWindow):
     show_signal = Signal()
+    current_instance = None  # Class variable to track the active instance
 
     def __init__(self, actions, show_navigation=False, navigate_next=None, navigate_prev=None):
         super().__init__()
+        # Close any existing instance before creating new one
+        if ContextWheel.current_instance:
+            ContextWheel.current_instance.hide()
         self.logger = setup_logger('ContextWheel', 'context_wheel')
         self.logger.info("ContextWheel initialized with actions: %s", actions)
-
+        
+        # Initialize MIDI Suite reference
+        self.midi_suite = None
+        self.sub_buttons = {}
+        
         self.setup_window()
         self.show_signal.connect(self.show_at_cursor)
 
@@ -89,7 +124,41 @@ class ContextWheel(QMainWindow):
         button.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         button.adjustSize()
         button.move(position.x() - button.size().width() // 2, position.y() - button.size().height() // 2)
-        button.clicked.connect(lambda checked, cb=callback: self.button_action(cb))
+        
+        # Store main button reference
+        self.sub_buttons[button] = []
+        
+        # Add hover events
+        button.enterEvent = lambda event: self.show_sub_buttons(button)
+        button.leaveEvent = lambda event: self.hide_sub_buttons(button)
+        
+        # If callback is a list, it contains sub-actions
+        if isinstance(callback, list):
+            for sub_label, sub_cb in callback:
+                sub_button = SubButton(sub_label, sub_cb, button)
+                self.sub_buttons[button].append(sub_button)
+            button.clicked.connect(lambda: None)  # Disable direct click
+        else:
+            button.clicked.connect(lambda checked, cb=callback: self.button_action(cb))
+
+    def show_sub_buttons(self, main_button):
+        if main_button in self.sub_buttons:
+            angle = math.atan2(main_button.y() - self.height()//2, 
+                             main_button.x() - self.width()//2)
+            radius = 60
+            
+            for i, sub_button in enumerate(self.sub_buttons[main_button]):
+                offset = (i - len(self.sub_buttons[main_button])/2) * 0.3
+                x = main_button.x() + radius * math.cos(angle + offset)
+                y = main_button.y() + radius * math.sin(angle + offset)
+                sub_button.move(int(x), int(y))
+                sub_button.show()
+                sub_button.raise_()
+
+    def hide_sub_buttons(self, main_button):
+        if main_button in self.sub_buttons:
+            for sub_button in self.sub_buttons[main_button]:
+                sub_button.hide()
 
     def button_style(self):
         return """
@@ -111,14 +180,13 @@ class ContextWheel(QMainWindow):
 
     def button_action(self, callback):
         try:
-            print(f"Button pressed, executing callback: {callback.__name__}")
-            self.logger.info("Executing callback: %s", callback.__name__)
+            print(f"Button pressed, executing callback: {callback.__name__ if hasattr(callback, '__name__') else 'anonymous'}")
+            self.logger.info("Executing callback")
+            self.hide()  # Close context wheel first
             callback()
-
         except Exception as e:
             print(f"Error executing callback: {e}")
             self.logger.error("Error executing callback: %s", e)
-        self.hide()
 
     def add_hide_button(self):
         hide_button = QPushButton("X", self)
@@ -182,6 +250,21 @@ class ContextWheel(QMainWindow):
             print("Auto VST Window enabled")
         self.auto_vst_window_enabled = not self.auto_vst_window_enabled
 
+    def show_marker_manager(self):
+        """Handle marker manager window creation"""
+        self.hide()  # Close the context wheel first
+        self.marker_window = MarkerAdjustWindow()
+        self.marker_window.show()
+
+    def closeEvent(self, event):
+        """Clean up window references"""
+        app = QApplication.instance()
+        if self in app.window_references:
+            app.window_references.remove(self)
+        if self.midi_suite:
+            self.midi_suite.close()
+        event.accept()
+
 def create_send_sub_wheel(track_router, start_index=0):
     tracks = track_router.get_tracks()
     num_tracks = len(tracks)
@@ -214,13 +297,12 @@ def load_keybinds():
 
 def main():
     app = QApplication.instance() or QApplication([])
+    app.window_references = []
 
-    # Load keybinds
     keybinds = load_keybinds()
 
     # Initialize the TrackControlApp, MidiSuite, and TrackRouter to access their methods
     track_control_app = TrackControlApp()
-    midi_suite_app = MidiSuite()
     track_router = TrackRouter()
 
     # Define actions for each context wheel
@@ -238,35 +320,35 @@ def main():
     send_manager_actions = [
         ("Create Send", lambda: create_send_sub_wheel(track_router)),
         ("Remove Send", track_router.remove_send),
-        ("Toggle Height Lock", lambda: send_manager_wheel.toggle_height_lock()),
-        ("Toggle Auto VST Window", lambda: send_manager_wheel.toggle_auto_vst_window()),
-        ("VST Presets", create_vst_preset_manager),  # Directly reference the function
-        ("Print Tracks", create_print_tracks)
+        ("Toggle Height Lock", lambda: TrackHeightLock().toggle_lock()),
+        ("Toggle Auto VST Window", lambda: FloatingFXController().toggle_windows()),
+        ("VST Presets", create_vst_preset_manager),
+        ("Print Tracks", create_print_tracks),
+        ("Marker Manager", lambda: [app.window_references.append(MarkerAdjustWindow()), app.window_references[-1].show()])
     ]
 
+    # Create MIDI Suite wheel with proper instance handling
     midi_suite_actions = [
-        ("Adjust Velocities", midi_suite_app.adjust_velocities),
-        ("Transpose Notes", midi_suite_app.transpose_notes),
-        ("Randomize Velocities", midi_suite_app.randomize_velocities),
-        ("Quantize Notes", midi_suite_app.quantize_notes),
-        ("Humanize Timing", midi_suite_app.humanize_timing),
-        ("Scale Velocities", midi_suite_app.scale_velocities),
-        ("Normalize Velocities", midi_suite_app.normalize_velocities),
-        ("Invert Pitch", midi_suite_app.invert_pitch),
-        ("Make Legato", midi_suite_app.make_legato)
+        ("Open Fast MIDI Suite", lambda: [app.window_references.append(FastMidiSuite()), app.window_references[-1].show()]),
+        ("Adjust Velocities", lambda: FastMidiSuite().adjust_velocity_up()),
+        ("Humanize", lambda: FastMidiSuite().humanize_notes()),
+        ("Quantize", lambda: FastMidiSuite().quantize_notes()),
+        ("Legato", lambda: FastMidiSuite().make_legato()),
+        ("CC Adjust", lambda: FastMidiSuite().adjust_cc_right())
     ]
+    midi_suite_wheel = ContextWheel(midi_suite_actions)
+    app.window_references.append(midi_suite_wheel)
 
     # Create context wheels
     state_suite_wheel = ContextWheel(state_suite_actions)
     send_manager_wheel = ContextWheel(send_manager_actions)
-    midi_suite_wheel = ContextWheel(midi_suite_actions)
-
+    
     # Set up the global hotkeys using loaded keybinds
     keyboard.add_hotkey(keybinds['state_suite'], lambda: state_suite_wheel.show_signal.emit())
     keyboard.add_hotkey(keybinds['send_manager'], lambda: send_manager_wheel.show_signal.emit())
     keyboard.add_hotkey(keybinds['midi_suite'], lambda: midi_suite_wheel.show_signal.emit())
 
-    app.exec_()
+    app.exec()
     
 if __name__ == "__main__":
-    main() 
+    main()

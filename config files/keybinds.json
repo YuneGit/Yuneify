@@ -1,1 +1,16 @@
-{"state_suite": "CTRL+SHIFT+ALT+Q", "send_manager": "CTRL+SHIFT+ALT+W", "midi_suite": "CTRL+SHIFT+ALT+E"}
+{
+    "state_suite": "ctrl+shift+alt+q",
+    "send_manager": "ctrl+shift+alt+w", 
+    "midi_suite": "ctrl+shift+alt+e",
+    "velocity_up": "ctrl+shift+alt+up",
+    "velocity_down": "ctrl+shift+alt+down",
+    "cc_left": "ctrl+shift+alt+left",
+    "cc_right": "ctrl+shift+alt+right",
+    "quantize": "ctrl+shift+alt+q",
+    "humanize": "ctrl+shift+alt+h",
+    "legato": "ctrl+shift+alt+l",
+    "chord_gen": "ctrl+shift+alt+c",
+    "chord_cycle": "ctrl+shift+alt+v",
+    "select_velocity": "ctrl+shift+alt+s",
+    "select_cc": "ctrl+shift+alt+d"
+}

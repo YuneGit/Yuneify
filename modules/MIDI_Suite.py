@@ -2,8 +2,8 @@ import sys
 import reapy
 import time
 import random
-from PySide6.QtWidgets import QApplication, QMainWindow, QPushButton, QVBoxLayout, QWidget, QSpinBox, QLabel, QComboBox, QGridLayout
-from PySide6.QtCore import Qt
+from PySide6.QtWidgets import QApplication, QMainWindow, QPushButton, QVBoxLayout, QWidget, QSpinBox, QLabel, QComboBox, QGridLayout, QGroupBox, QScrollArea
+from PySide6.QtCore import Qt, QTimer
 from reapy import reascript_api as RPR
 import statistics
 from modules.styles import apply_dark_theme  # Import the stylesheet function
@@ -13,110 +13,145 @@ class MidiSuite(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("MIDI Suite")
-        self.setGeometry(100, 100, 275, 275)
-        self.setFixedWidth(275)
-
+        self.setGeometry(100, 100, 400, 500)  # Increased window size
         apply_dark_theme(self)
-                
-        # Initialize the main widget and layout
-        self.main_widget = QWidget(self)
-        self.setCentralWidget(self.main_widget)
+        
+        # Create scroll area
+        self.scroll = QScrollArea()
+        self.scroll.setWidgetResizable(True)
+        self.setCentralWidget(self.scroll)
+        
+        # Main content widget
+        self.main_content = QWidget()
+        self.scroll.setWidget(self.main_content)
         
         # Main vertical layout
-        self.main_layout = QVBoxLayout(self.main_widget)
+        self.main_layout = QVBoxLayout(self.main_content)
+        self.main_layout.setContentsMargins(10, 10, 10, 10)
         
-        # Add a label at the top
-        self.title_label = QLabel("MIDI Suite", self)
-        self.title_label.setAlignment(Qt.AlignCenter)  # Center the label text
-        self.main_layout.addWidget(self.title_label)
-        
-        # Grid layout for buttons
-        self.grid_layout = QGridLayout()
-        self.main_layout.addLayout(self.grid_layout)
-        
-        # Add controls for velocity adjustment
+        # Add group boxes in a more organized way
         self.add_velocity_controls()
-        
-        # Add controls for pitch transposition
         self.add_transpose_controls()
+        self.add_quick_tools()
+        self.add_advanced_tools()
         
-        # Add controls for randomizing MIDI velocities
-        self.add_randomize_controls()
-        
-        # Add controls for quantizing MIDI notes
-        self.add_quantize_controls()
-
-        # Add controls for humanizing MIDI timing
-        self.add_humanize_controls()
-
-        # Add controls for scaling MIDI velocities
-        self.add_scale_controls()
-
-        # Add controls for normalizing MIDI velocities
-        self.add_normalize_controls()
-
-        # Add controls for inverting MIDI pitch
-        self.add_invert_pitch_controls()
-
-        # Add controls for legato feature
-        self.add_legato_controls()
-
         # Initialize MIDI operation classes
         self.init_midi_operations()
+        self._timer = QTimer(self)
+        self._timer.timeout.connect(self._process_operations)
+        self._pending_operations = []
 
     def add_velocity_controls(self):
+        # Create a group box for velocity controls
+        velocity_group = QGroupBox("Velocity Controls")
+        velocity_layout = QGridLayout()
+        
+        # Add velocity adjustment controls
+        self.velocity_label = QLabel("Adjustment Amount:", self)
+        velocity_layout.addWidget(self.velocity_label, 0, 0)
+        
         self.velocity_spinbox = QSpinBox(self)
         self.velocity_spinbox.setRange(-127, 127)
-        self.velocity_spinbox.setValue(10)  # Default value
-        self.grid_layout.addWidget(self.velocity_spinbox, 0, 0)
+        self.velocity_spinbox.setValue(10)
+        velocity_layout.addWidget(self.velocity_spinbox, 0, 1)
         
+        # Add velocity range controls
+        self.min_velocity_label = QLabel("Min Velocity:", self)
+        velocity_layout.addWidget(self.min_velocity_label, 1, 0)
+        
+        self.min_velocity_spinbox = QSpinBox(self)
+        self.min_velocity_spinbox.setRange(0, 127)
+        self.min_velocity_spinbox.setValue(0)
+        velocity_layout.addWidget(self.min_velocity_spinbox, 1, 1)
+        
+        self.max_velocity_label = QLabel("Max Velocity:", self)
+        velocity_layout.addWidget(self.max_velocity_label, 2, 0)
+        
+        self.max_velocity_spinbox = QSpinBox(self)
+        self.max_velocity_spinbox.setRange(0, 127)
+        self.max_velocity_spinbox.setValue(127)
+        velocity_layout.addWidget(self.max_velocity_spinbox, 2, 1)
+        
+        # Add apply button
         self.velocity_button = QPushButton("Adjust Velocities", self)
         self.velocity_button.clicked.connect(self.adjust_velocities)
-        self.grid_layout.addWidget(self.velocity_button, 0, 1)
+        velocity_layout.addWidget(self.velocity_button, 3, 0, 1, 2)
+        
+        velocity_group.setLayout(velocity_layout)
+        self.main_layout.addWidget(velocity_group)
 
     def add_transpose_controls(self):
-        self.transpose_combobox = QComboBox(self)
-        self.transpose_combobox.addItems(["Octave", "Major Third", "Minor Third", "Perfect Fifth"])
-        self.grid_layout.addWidget(self.transpose_combobox, 1, 0)
+        group = QGroupBox("Transposition")
+        layout = QGridLayout()
         
-        self.transpose_button = QPushButton("Transpose Notes", self)
-        self.transpose_button.clicked.connect(self.transpose_notes)
-        self.grid_layout.addWidget(self.transpose_button, 1, 1)
+        self.transpose_combobox = QComboBox()
+        self.transpose_combobox.addItems(["Octave", "Major Third", "Minor Third", "Perfect Fifth"])
+        layout.addWidget(self.transpose_combobox, 0, 0)
+        
+        transpose_btn = QPushButton("Transpose", clicked=self.transpose_notes)
+        layout.addWidget(transpose_btn, 0, 1)
+        
+        group.setLayout(layout)
+        self.main_layout.addWidget(group)
 
-    def add_randomize_controls(self):
-        self.randomize_velocity_button = QPushButton("Randomize Velocities", self)
-        self.randomize_velocity_button.clicked.connect(self.randomize_velocities)
-        self.grid_layout.addWidget(self.randomize_velocity_button, 2, 0)
+    def add_quick_tools(self):
+        group = QGroupBox("Quick Tools")
+        layout = QGridLayout()
+        
+        # First row
+        layout.addWidget(QPushButton("Randomize", clicked=self.randomize_velocities), 0, 0)
+        layout.addWidget(QPushButton("Quantize", clicked=self.quantize_notes), 0, 1)
+        
+        # Second row
+        humanize_group = QGroupBox("Humanize")
+        humanize_layout = QGridLayout()
+        
+        self.timing_amount = QSpinBox()
+        self.timing_amount.setRange(0, 100)
+        self.timing_amount.setValue(10)
+        self.timing_amount.setSuffix(" ticks")
+        humanize_layout.addWidget(QLabel("Timing:"), 0, 0)
+        humanize_layout.addWidget(self.timing_amount, 0, 1)
+        
+        self.velocity_amount = QSpinBox()
+        self.velocity_amount.setRange(0, 127)
+        self.velocity_amount.setValue(10)
+        humanize_layout.addWidget(QLabel("Velocity:"), 1, 0)
+        humanize_layout.addWidget(self.velocity_amount, 1, 1)
+        
+        humanize_btn = QPushButton("Apply", clicked=self.humanize)
+        humanize_layout.addWidget(humanize_btn, 2, 0, 1, 2)
+        
+        humanize_group.setLayout(humanize_layout)
+        layout.addWidget(humanize_group, 1, 0, 1, 2)
+        
+        # Third row
+        layout.addWidget(QPushButton("Normalize", clicked=self.normalize_velocities), 2, 0)
+        layout.addWidget(QPushButton("Legato", clicked=self.make_legato), 2, 1)
+        
+        # Fourth row
+        layout.addWidget(QPushButton("Reverse", clicked=self.reverse_notes), 3, 0)
+        
+        group.setLayout(layout)
+        self.main_layout.addWidget(group)
 
-    def add_quantize_controls(self):
-        self.quantize_button = QPushButton("Quantize Notes", self)
-        self.quantize_button.clicked.connect(self.quantize_notes)
-        self.grid_layout.addWidget(self.quantize_button, 2, 1)
+    def add_advanced_tools(self):
+        group = QGroupBox("Advanced Tools")
+        layout = QGridLayout()
+        
+        # Chord generation controls
+        self.chord_type = QComboBox()
+        self.chord_type.addItems(["Major", "Minor", "7th", "Maj7", "Min7", "Sus2", "Sus4", "Dim", "Aug"])
+        layout.addWidget(QLabel("Chord Type:"), 0, 0)
+        layout.addWidget(self.chord_type, 0, 1)
+        
+        layout.addWidget(QPushButton("Compress", clicked=self.compress_velocities), 1, 0)
+        layout.addWidget(QPushButton("Invert Pitch", clicked=self.invert_pitch), 1, 1)
+        layout.addWidget(QPushButton("Generate Chords", clicked=self.generate_chords), 2, 0)
+        
+        group.setLayout(layout)
+        self.main_layout.addWidget(group)
 
-    def add_humanize_controls(self):
-        self.humanize_button = QPushButton("Humanize Timing", self)
-        self.humanize_button.clicked.connect(self.humanize_timing)
-        self.grid_layout.addWidget(self.humanize_button, 3, 0)
-
-    def add_scale_controls(self):
-        self.scale_velocity_button = QPushButton("Scale Velocities", self)
-        self.scale_velocity_button.clicked.connect(self.scale_velocities)
-        self.grid_layout.addWidget(self.scale_velocity_button, 3, 1)
-
-    def add_normalize_controls(self):
-        self.normalize_velocity_button = QPushButton("Normalize Velocities", self)
-        self.normalize_velocity_button.clicked.connect(self.normalize_velocities)
-        self.grid_layout.addWidget(self.normalize_velocity_button, 4, 0)
-
-    def add_invert_pitch_controls(self):
-        self.invert_pitch_button = QPushButton("Invert Pitch", self)
-        self.invert_pitch_button.clicked.connect(self.invert_pitch)
-        self.grid_layout.addWidget(self.invert_pitch_button, 4, 1)
-
-    def add_legato_controls(self):
-        self.legato_button = QPushButton("Make Legato", self)
-        self.legato_button.clicked.connect(self.make_legato)
-        self.grid_layout.addWidget(self.legato_button, 5, 0)
 
     def init_midi_operations(self):
         self.velocity_adjuster = MidiVelocityAdjuster()
@@ -126,14 +161,16 @@ class MidiSuite(QMainWindow):
         self.timing_humanizer = MidiTimingHumanizer()
         self.velocity_scaler = MidiVelocityScaler()
         self.velocity_normalizer = MidiVelocityNormalizer()
+        self.velocity_compressor = MidiVelocityCompressor()
         self.pitch_inverter = MidiPitchInverter()
         self.legato_maker = MidiLegatoMaker()
+        self.chord_generator = MidiChordGenerator()
 
     def adjust_velocities(self):
         """Adjust MIDI velocities using MidiVelocityAdjuster."""
         velocity_change = self.velocity_spinbox.value()
         self.velocity_adjuster.run(velocity_change)
-        print("Velocities adjusted.")
+        print(f"Velocities adjusted by {velocity_change}")
 
     def transpose_notes(self):
         """Transpose MIDI notes by selected interval using MidiPitchTransposer."""
@@ -157,10 +194,12 @@ class MidiSuite(QMainWindow):
         self.note_quantizer.run()
         print("Notes quantized.")
 
-    def humanize_timing(self):
-        """Add slight random variations to MIDI note start times."""
-        self.timing_humanizer.run()
-        print("Timing humanized.")
+    def humanize(self):
+        """Humanize MIDI timing and velocities"""
+        timing_amount = self.timing_amount.value()
+        velocity_amount = self.velocity_amount.value()
+        self.timing_humanizer.run(timing_amount, velocity_amount)
+        print(f"Humanized timing by ±{timing_amount} ticks and velocity by ±{velocity_amount}")
 
     def scale_velocities(self):
         """Scale MIDI velocities by a given factor."""
@@ -181,6 +220,40 @@ class MidiSuite(QMainWindow):
         """Make MIDI notes legato by overlapping them slightly."""
         self.legato_maker.run()
         print("Notes made legato.")
+
+    def compress_velocities(self):
+        """Compress MIDI velocities using threshold and ratio."""
+        threshold = 64  # Example threshold value
+        ratio = 2.0     # Example compression ratio
+        self.velocity_compressor.run(threshold, ratio)
+        print(f"Velocities compressed with {ratio}:1 ratio above {threshold}")
+
+    def reverse_notes(self):
+        """Reverse the order of MIDI notes in time."""
+        self.note_reverser.run()
+        print("MIDI notes reversed")
+
+    def generate_chords(self):
+        """Generate chords from selected notes"""
+        chord_type = self.chord_type.currentText()
+        self.chord_generator.run(chord_type)
+        print(f"Generated {chord_type} chords from selected notes")
+
+
+    def _process_operations(self):
+        """Process queued MIDI operations in the main thread"""
+        while self._pending_operations:
+            try:
+                func, args = self._pending_operations.pop(0)
+                func(*args)
+            except Exception as e:
+                print(f"Error processing operation: {str(e)}")
+
+    def queue_operation(self, func, *args):
+        """Add an operation to be processed in the main thread"""
+        self._pending_operations.append((func, args))
+        if not self._timer.isActive():
+            self._timer.start(100)
 
 class MidiOperationBase:
     def __init__(self):
@@ -364,7 +437,7 @@ class MidiNoteQuantizer(MidiOperationBase):
             print(f"Quantized note (Pitch: {note.pitch}) to start at PPQ: {quantized_start_ppq}.")
 
 class MidiTimingHumanizer(MidiOperationBase):
-    def run(self):
+    def run(self, timing_amount, velocity_amount):
         take = self.get_active_take()
         if not take:
             return
@@ -374,27 +447,34 @@ class MidiTimingHumanizer(MidiOperationBase):
             print("No MIDI notes.")
             return
 
-        print(f"Humanizing timing for {len(notes)} notes.")
-        self.humanize_midi_timing(take, notes)
+        print(f"Humanizing timing and velocity for {len(notes)} notes.")
+        self.humanize_midi(take, notes, timing_amount, velocity_amount)
 
-    def humanize_midi_timing(self, take, notes):
+    def humanize_midi(self, take, notes, timing_amount, velocity_amount):
         for note in notes:
+            # Humanize timing
             start_ppq = take.time_to_ppq(note.start)
-            humanized_start_ppq = start_ppq + random.randint(-10, 10)  # Random shift within 10 PPQ
-            end_ppq = take.time_to_ppq(note.end)
+            timing_variation = random.randint(-timing_amount, timing_amount)
+            humanized_start_ppq = start_ppq + timing_variation
+            
+            # Humanize velocity
+            velocity_variation = random.randint(-velocity_amount, velocity_amount)
+            new_velocity = min(max(note.velocity + velocity_variation, 0), 127)
+            
+            # Apply changes
             RPR.MIDI_SetNote(
                 take.id,
                 note.index,
                 note.selected,
                 note.muted,
                 humanized_start_ppq,
-                end_ppq,
+                take.time_to_ppq(note.end),
                 note.channel,
                 note.pitch,
-                note.velocity,
+                new_velocity,
                 False
             )
-            print(f"Humanized note (Pitch: {note.pitch}) to start at PPQ: {humanized_start_ppq}.")
+            print(f"Humanized note (Pitch: {note.pitch}) - Timing: ±{timing_amount}, Velocity: {new_velocity}")
 
 class MidiVelocityScaler(MidiOperationBase):
     def run(self):
@@ -504,6 +584,49 @@ class MidiPitchInverter(MidiOperationBase):
             )
             print(f"Inverted note (Original Pitch: {note.pitch}) to pitch: {inverted_pitch}.")
 
+class MidiVelocityCompressor(MidiOperationBase):
+    def run(self, threshold, ratio):
+        take = self.get_active_take()
+        if not take:
+            return
+
+        notes = take.notes
+        if not notes:
+            print("No MIDI notes.")
+            return
+
+        print(f"Compressing velocities for {len(notes)} notes with threshold {threshold} and ratio {ratio}:1.")
+        self.compress_midi_velocities(take, notes, threshold, ratio)
+
+    def compress_midi_velocities(self, take, notes, threshold, ratio):
+        for note in notes:
+            if note.velocity > threshold:
+                # Calculate compressed velocity
+                excess = note.velocity - threshold
+                compressed_excess = excess / ratio
+                new_velocity = threshold + compressed_excess
+                
+                # Clamp to valid range
+                new_velocity = min(max(int(new_velocity), 0), 127)
+                
+                retval, *other_values = RPR.MIDI_GetNote(
+                    take.id, note.index, 0, 0, 0, 0, 0, 0, 0
+                )
+                muted, start, end, channel, original_pitch, _ = other_values[-6:]
+                RPR.MIDI_SetNote(
+                    take.id,
+                    note.index,
+                    note.selected,
+                    muted,
+                    start,
+                    end,
+                    channel,
+                    note.pitch,
+                    new_velocity,
+                    False
+                )
+                print(f"Compressed note (Pitch: {note.pitch}) from {note.velocity} to {new_velocity}.")
+
 class MidiLegatoMaker(MidiOperationBase):
     def run(self):
         take = self.get_active_take()
@@ -543,11 +666,62 @@ class MidiLegatoMaker(MidiOperationBase):
             )
             print(f"Adjusted note (Pitch: {current_note.pitch}) to end at PPQ: {new_end}.")
 
+
+
+class MidiChordGenerator(MidiOperationBase):
+    def run(self):
+        take = self.get_active_take()
+        if not take:
+            return
+
+        notes = [note for note in take.notes if note.selected]
+        if not notes:
+            print("No selected notes to generate chords from")
+            return
+
+        print(f"Generating chords for {len(notes)} selected notes")
+        self.generate_midi_chords(take, notes)
+
+    def generate_midi_chords(self, take, notes, chord_type):
+        RPR.Undo_BeginBlock2(take.id, "Generate Chords", -1)
+        
+        # Define chord intervals for each type
+        chord_intervals = {
+            "Major": [4, 7],
+            "Minor": [3, 7],
+            "7th": [4, 7, 10],
+            "Maj7": [4, 7, 11],
+            "Min7": [3, 7, 10],
+            "Sus2": [2, 7],
+            "Sus4": [5, 7],
+            "Dim": [3, 6],
+            "Aug": [4, 8]
+        }
+        
+        intervals = chord_intervals.get(chord_type, [4, 7])  # Default to major if invalid
+        
+        for note in notes:
+            for interval in intervals:
+                take.add_note(
+                    start=take.time_to_ppq(note.start),
+                    end=take.time_to_ppq(note.end),
+                    pitch=note.pitch + interval,
+                    velocity=note.velocity,
+                    channel=note.channel,
+                    selected=False,
+                    muted=note.muted,
+                    unit="ppq",
+                    sort=False
+                )
+        
+        RPR.MIDI_Sort(take.id)
+        RPR.Undo_EndBlock2(take.id, "Generate Chords", -1)
+
 def main():
     app = QApplication([])
     window = MidiSuite()
     window.show()
-    sys.exit(app.exec_())
+    sys.exit(app.exec())
 
 if __name__ == "__main__":
-    main() 
+    main()

@@ -205,4 +205,4 @@ if __name__ == "__main__":
     apply_dark_theme(app)
     window = TrackControlApp()
     window.show()
-    sys.exit(app.exec_())
+    sys.exit(app.exec())

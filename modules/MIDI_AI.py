@@ -172,4 +172,4 @@ if __name__ == "__main__":
     app = QApplication([])
     style_selector = AIOrchestrationStyleSelector()
     style_selector.show()
-    sys.exit(app.exec_())
+    sys.exit(app.exec())
