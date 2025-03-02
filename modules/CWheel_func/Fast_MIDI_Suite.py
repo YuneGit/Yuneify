@@ -1,20 +1,24 @@
 import sys
 import json
-from PySide6.QtGui import QPainterPath
+from PySide6.QtGui import QPainterPath, QKeySequence, QAction
 import reapy
 import random
 import statistics
 from PySide6.QtWidgets import (QApplication, QMainWindow, QPushButton, QVBoxLayout, 
                               QWidget, QSpinBox, QLabel, QComboBox, QGridLayout, 
-                              QGroupBox, QScrollArea, QSlider, QCheckBox, QTabWidget, QTextEdit)
+                              QGroupBox, QScrollArea, QSlider, QCheckBox, QTabWidget, QTextEdit, QHBoxLayout)
 from PySide6.QtCore import Qt, QTimer, Signal
 from PySide6.QtGui import QPainter, QColor, QPen
 from reapy import reascript_api as RPR
+from modules.AI_func.ui_overlay import OverlayUI
 from modules.styles import apply_dark_theme
-from modules.ops.velocity_ops import VelocityOperations
-from modules.ops.cc_ops import CCOperations
-from modules.ops.filter_ops import FilterOperations
-from modules.ops.script_ops import ScriptOperations
+from modules.AI_func.ops.velocity_ops import VelocityOperations
+from modules.AI_func.ops.cc_ops import CCOperations
+from modules.AI_func.ops.filter_ops import FilterOperations
+from modules.AI_func.ops.script_ops import ScriptOperations
+import os
+from modules.context_tools import ContextToolsWindow
+from reapy.core.reaper.midi import get_active_editor as get_active_midi_editor
 
 class FastMidiSuite(QMainWindow):
     def __init__(self):
@@ -22,6 +26,10 @@ class FastMidiSuite(QMainWindow):
         self.setWindowTitle("Fast MIDI Suite")
         self.setGeometry(100, 100, 800, 600)
         apply_dark_theme(self)
+        
+        # Create context-aware tools window
+        self.context_tools = ContextToolsWindow(self)
+        self.context_tools.show()
         
         # Main tabs
         self.tabs = QTabWidget()
@@ -39,6 +47,13 @@ class FastMidiSuite(QMainWindow):
         
         # Keybind manager
         self.keybinds = self.load_keybinds()
+        
+        # Initialize keybinds after loading
+        self.setup_keybind_actions()
+
+        # Create overlay UI
+        self.overlay = OverlayUI(self)
+        self.overlay.move(10, self.height() - 100)  # Position at bottom-left
         
     def add_velocity_tab(self):
         """Velocity editing interface"""
@@ -79,9 +94,30 @@ class FastMidiSuite(QMainWindow):
         self.compress_btn.clicked.connect(self.compress_velocities)
         tools_layout.addWidget(self.compress_btn, 1, 0)
         
+        # Scale controls
         self.scale_btn = QPushButton("Scale")
         self.scale_btn.clicked.connect(self.scale_velocities)
         tools_layout.addWidget(self.scale_btn, 1, 1)
+
+        # Add scale factor slider
+        scale_group = QGroupBox("Scale Factor (100-200%)")
+        scale_layout = QHBoxLayout()
+        
+        self.scale_slider = QSlider(Qt.Horizontal)
+        self.scale_slider.setRange(0, 100)
+        self.scale_slider.setValue(20)  # Default 120% (1.2x)
+        scale_layout.addWidget(self.scale_slider)
+        
+        self.scale_label = QLabel("120%")
+        scale_layout.addWidget(self.scale_label)
+        
+        # Connect slider to label update
+        self.scale_slider.valueChanged.connect(
+            lambda v: self.scale_label.setText(f"{100 + v}%")
+        )
+        
+        scale_group.setLayout(scale_layout)
+        layout.addWidget(scale_group)
         
         tools_group.setLayout(tools_layout)
         layout.addWidget(tools_group)
@@ -102,10 +138,18 @@ class FastMidiSuite(QMainWindow):
         cc_select_layout.addWidget(QLabel("CC Number:"), 0, 0)
         cc_select_layout.addWidget(self.cc_combobox, 0, 1)
         
+        # CC value controls
         self.cc_value = QSlider(Qt.Horizontal)
         self.cc_value.setRange(0, 127)
         cc_select_layout.addWidget(QLabel("CC Value:"), 1, 0)
         cc_select_layout.addWidget(self.cc_value, 1, 1)
+
+        # CC delta controls
+        self.cc_delta = QSpinBox()
+        self.cc_delta.setRange(1, 64)
+        self.cc_delta.setValue(5)
+        cc_select_layout.addWidget(QLabel("Adjust Delta:"), 2, 0)
+        cc_select_layout.addWidget(self.cc_delta, 2, 1)
         
         cc_select_group.setLayout(cc_select_layout)
         layout.addWidget(cc_select_group)
@@ -218,10 +262,37 @@ class FastMidiSuite(QMainWindow):
         
     def load_keybinds(self):
         """Load keybind presets"""
+        config_dir = "config files"
+        config_path = os.path.join(config_dir, "keybinds.json")
+        
         try:
-            with open("keybinds.json", "r") as f:
+            # Create config directory if it doesn't exist
+            if not os.path.exists(config_dir):
+                os.makedirs(config_dir)
+                
+            # Try loading from config files directory first
+            with open(config_path, "r") as f:
                 return json.load(f)
         except FileNotFoundError:
+            # Create default keybinds if file doesn't exist
+            default_keybinds = {
+                "velocity_up": "ctrl+shift+alt+up",
+                "velocity_down": "ctrl+shift+alt+down",
+                "cc_left": "ctrl+shift+alt+left",
+                "cc_right": "ctrl+shift+alt+right",
+                "quantize": "ctrl+shift+alt+q",
+                "humanize": "ctrl+shift+alt+h",
+                "legato": "ctrl+shift+alt+l",
+                "chord_gen": "ctrl+shift+alt+c",
+                "chord_cycle": "ctrl+shift+alt+v",
+                "select_velocity": "ctrl+shift+alt+s",
+                "select_cc": "ctrl+shift+alt+d"
+            }
+            with open(config_path, "w") as f:
+                json.dump(default_keybinds, f, indent=2)
+            return default_keybinds
+        except json.JSONDecodeError:
+            print("Invalid keybinds.json, using defaults")
             return {
                 "velocity_up": "ctrl+shift+alt+up",
                 "velocity_down": "ctrl+shift+alt+down",
@@ -237,31 +308,190 @@ class FastMidiSuite(QMainWindow):
             }
             
     def randomize_velocities(self):
-        """Randomize selected note velocities"""
-        self.velocity_ops.randomize(
-            self.min_velocity.value(),
-            self.max_velocity.value()
-        )
+        """Randomize selected note velocities with bulk edit"""
+        try:
+            # Batch process all selected notes at once
+            editor = get_active_midi_editor()
+            if not editor:
+                return
+                
+            take = editor.take
+            if not take:
+                return
+                
+            # Get all selected notes in one call
+            selected_notes = take.get_selected_notes()
+            if not selected_notes:
+                return
+                
+            min_vel = self.min_velocity.value()
+            max_vel = self.max_velocity.value()
+            
+            # Generate all random velocities at once
+            new_velocities = [random.randint(min_vel, max_vel) 
+                            for _ in selected_notes]
+            
+            # Update notes in bulk
+            with reapy.undo_block("Randomize Velocities"):
+                for note, vel in zip(selected_notes, new_velocities):
+                    note.velocity = vel
+                    
+                RPR.UpdateArrange()
+                
+            self.overlay.show_message(f"Randomized {len(selected_notes)} notes")
+            
+        except Exception as e:
+            print(f"Randomize error: {e}")
         
     def normalize_velocities(self):
-        """Normalize velocities to median"""
-        self.velocity_ops.normalize()
+        """Normalize velocities to median with bulk edit"""
+        try:
+            editor = get_active_midi_editor()
+            if not editor:
+                return
+                
+            take = editor.take
+            if not take:
+                return
+                
+            selected_notes = take.get_selected_notes()
+            if not selected_notes:
+                return
+
+            # Calculate median velocity
+            velocities = [n.velocity for n in selected_notes]
+            median_vel = int(statistics.median(velocities))
+            
+            with reapy.undo_block("Normalize Velocities"):
+                for note in selected_notes:
+                    note.velocity = median_vel
+                RPR.UpdateArrange()
+                
+            self.overlay.show_message(f"Normalized {len(selected_notes)} notes to {median_vel}")
+            
+        except Exception as e:
+            print(f"Normalize error: {e}")
         
     def compress_velocities(self):
-        """Compress velocity range"""
-        self.velocity_ops.compress(
-            self.min_velocity.value(),
-            self.max_velocity.value()
-        )
+        """Compress velocity range with bulk edit"""
+        try:
+            editor = get_active_midi_editor()
+            if not editor:
+                return
+                
+            take = editor.take
+            if not take:
+                return
+                
+            selected_notes = take.get_selected_notes()
+            if not selected_notes:
+                return
+
+            min_target = self.min_velocity.value()
+            max_target = self.max_velocity.value()
+            current_min = min(n.velocity for n in selected_notes)
+            current_max = max(n.velocity for n in selected_notes)
+            range_scale = (max_target - min_target) / (current_max - current_min)
+            
+            with reapy.undo_block("Compress Velocities"):
+                for note in selected_notes:
+                    scaled = (note.velocity - current_min) * range_scale + min_target
+                    note.velocity = int(max(min_target, min(max_target, scaled)))
+                RPR.UpdateArrange()
+                
+            self.overlay.show_message(f"Compressed {len(selected_notes)} notes to {min_target}-{max_target}")
+            
+        except Exception as e:
+            print(f"Compress error: {e}")
         
     def scale_velocities(self):
-        """Scale velocities by factor"""
-        self.velocity_ops.scale(1.2)
+        """Scale velocities with dynamic factor and bulk edit"""
+        try:
+            editor = get_active_midi_editor()
+            if not editor:
+                return
+                
+            take = editor.take
+            if not take:
+                return
+                
+            selected_notes = take.get_selected_notes()
+            if not selected_notes:
+                return
+
+            # Calculate scale factor based on slider position (1.0-2.0)
+            scale_factor = 1.0 + (self.scale_slider.value() / 100)
+            
+            with reapy.undo_block("Scale Velocities"):
+                for note in selected_notes:
+                    new_vel = int(note.velocity * scale_factor)
+                    note.velocity = max(0, min(127, new_vel))
+                RPR.UpdateArrange()
+                
+            self.overlay.show_message(f"Scaled {len(selected_notes)} notes by {scale_factor:.2f}x")
+            
+        except Exception as e:
+            print(f"Scale error: {e}")
         
     def run_script(self):
         """Execute MIDI script"""
         script = self.script_editor.toPlainText()
         self.script_ops.execute(script)
+        
+    def adjust_cc_right(self):
+        """Adjust CC values to the right with bulk editing"""
+        delta = self.cc_delta.value()
+        self.cc_ops.adjust_cc_bulk(delta, self.overlay)
+        self._refresh_cc_display()
+
+    def adjust_cc_left(self):
+        """Adjust CC values to the left with bulk editing"""
+        delta = -self.cc_delta.value()
+        self.cc_ops.adjust_cc_bulk(delta, self.overlay)
+        self._refresh_cc_display()
+
+    def _refresh_cc_display(self):
+        """Update CC visualization after changes"""
+        if self.tabs.currentIndex() == 1:  # CC Editor tab
+            self.canvas.update()
+            self.visualizer.update()
+        
+    def setup_keybind_actions(self):
+        """Create actions for keybinds"""
+        self.actions = {}
+        for name, shortcut in self.keybinds.items():
+            action = QAction(self)
+            action.setShortcut(QKeySequence(shortcut))
+            self.actions[name] = action
+            
+        # Connect actions to methods
+        self.actions["velocity_up"].triggered.connect(self.velocity_up)
+        self.actions["velocity_down"].triggered.connect(self.velocity_down)
+        self.actions["cc_left"].triggered.connect(self.adjust_cc_left)
+        self.actions["cc_right"].triggered.connect(self.adjust_cc_right)
+        # Add more connections as needed
+        
+    def velocity_up(self):
+        """Increase selected velocities with bulk processing"""
+        delta = 5
+        count = self.velocity_ops.adjust_velocity_bulk(delta)
+        self.overlay.show_message(f"Velocity +{delta} ({count} notes)")
+        self._refresh_velocity_display()
+        
+    def velocity_down(self):
+        """Decrease selected velocities with bulk processing"""
+        delta = -5
+        count = self.velocity_ops.adjust_velocity_bulk(delta)
+        self.overlay.show_message(f"Velocity {delta} ({count} notes)")
+        self._refresh_velocity_display()
+
+    def _refresh_velocity_display(self):
+        """Update velocity visualization after changes"""
+        if self.tabs.currentIndex() == 0:  # Velocity tab
+            self.visualizer.update()
+            # Update velocity range display immediately
+            self.min_velocity.repaint()
+            self.max_velocity.repaint()
         
 class CC_Canvas(QWidget):
     """CC curve editing canvas"""

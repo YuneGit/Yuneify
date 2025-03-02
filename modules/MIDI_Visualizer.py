@@ -1,9 +1,9 @@
 import reapy
 import sys
-from PySide6.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QGraphicsView, QGraphicsScene, QGraphicsLineItem, QLabel
+from PySide6.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QGraphicsView, QGraphicsScene, QGraphicsLineItem, QLabel, QSizePolicy
 from PySide6.QtGui import QPen, QColor
 from PySide6.QtCore import Qt, QTimer, QThread, Signal, QObject
-from modules.AI_composition_review import MidiNote  # Corrected import path
+from modules.AI_func.ai_models import MidiNote  # Update import source
 from modules.styles import apply_dark_theme  # Import the stylesheet function
 
 class MidiWorker(QObject):
@@ -53,9 +53,10 @@ class MidiVisualizer(QWidget):
 
     def initUI(self):
         self.setWindowTitle('MIDI Visualizer')
-        self.setFixedSize(800, 600)
+        self.setMinimumSize(400, 300)  # Make resizable with minimum dimensions
 
         apply_dark_theme(self)
+        self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         main_layout = QVBoxLayout()
 
         self.visualize_button = QPushButton('Visualize MIDI', self)
@@ -189,4 +190,4 @@ if __name__ == "__main__":
     app = QApplication([])
     visualizer = MidiVisualizer()
     visualizer.show()
-    sys.exit(app.exec()) 
+    sys.exit(app.exec())

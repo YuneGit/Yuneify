@@ -1,0 +1,926 @@
+---
+description: This rule provides the correct function names and usages inside reapy.
+globs: 
+alwaysApply: false
+---
+reapy codebase context:
+
+@c:\Users\noah0\AppData\Local\Programs\Python\Python312\Lib\site-packages\reapy\core\item\item.py 
+import reapy
+from reapy import reascript_api as RPR
+from reapy.core import ReapyObject
+
+class Item(ReapyObject):
+    _class_name = "Item"
+
+    def __init__(self, id):
+        self.id = id
+
+    def __eq__(self, other):
+        return isinstance(other, Item) and self.id == other.id
+
+    @property
+    def _args(self):
+        return self.id,
+
+    @property
+    def active_take(self):
+        """Return the active take of the item."""
+        take = reapy.Take(RPR.GetActiveTake(self.id))
+        return take
+
+    def add_take(self):
+        """Create and return a new take in item."""
+        take_id = RPR.AddTakeToMediaItem(self.id)
+        take = reapy.Take(take_id)
+        return take
+
+    @reapy.inside_reaper()
+    def delete(self):
+        """Delete item."""
+        RPR.DeleteTrackMediaItem(self.track.id, self.id)
+
+    def get_info_value(self, param_name):
+        return RPR.GetMediaItemInfo_Value(self.id, param_name)
+
+    def get_take(self, index):
+        """Return index-th take of item."""
+        take_id = RPR.GetItemTake(self.id, index)
+        take = reapy.Take(take_id)
+        return take
+
+    @reapy.inside_reaper()
+    @property
+    def has_valid_id(self):
+        """Check if ReaScript ID is valid."""
+        try:
+            project_id = self.project.id
+        except OSError:
+            return False
+        pointer, name = self._get_pointer_and_name()
+        return bool(RPR.ValidatePtr2(project_id, pointer, name))
+
+    @property
+    def is_selected(self):
+        """Check if item is selected."""
+        is_selected = bool(RPR.IsMediaItemSelected(self.id))
+        return is_selected
+
+    @property
+    def length(self):
+        """Return item length in seconds."""
+        param_name = "D_LENGTH"
+        length = self.get_info_value(param_name)
+        return length
+
+    @length.setter
+    def length(self, length):
+        """Set item length."""
+        RPR.SetMediaItemLength(self.id, length, True)
+
+    @property
+    def n_takes(self):
+        """Return the number of takes of media item."""
+        n_takes = RPR.GetMediaItemNumTakes(self.id)
+        return n_takes
+
+    @property
+    def position(self):
+        """Return item position in seconds."""
+        position = self.get_info_value("D_POSITION")
+        return position
+
+    @position.setter
+    def position(self, position):
+        """Set media item position."""
+        RPR.SetMediaItemPosition(self.id, position, False)
+
+    @property
+    def project(self):
+        """Item parent project."""
+        return reapy.Project(RPR.GetItemProjectContext(self.id))
+
+    def set_info_value(self, param_name, value):
+        return RPR.SetMediaItemInfo_Value(self.id, param_name, value)
+
+    def split(self, position):
+        """Split item and return left and right parts."""
+        right_id = RPR.SplitMediaItem(self.id, position)
+        left, right = self, Item(right_id)
+        return left, right
+
+    @reapy.inside_reaper()
+    @property
+    def takes(self):
+        """Return list of all takes of media item."""
+        n_takes = RPR.GetMediaItemNumTakes(self.id)
+        take_ids = [RPR.GetMediaItemTake(self.id, i) for i in range(n_takes)]
+        takes = [reapy.Take(take_id) for take_id in take_ids]
+        return takes
+
+    @reapy.inside_reaper()
+    @property
+    def track(self):
+        """Parent track of item."""
+        track_id = RPR.GetMediaItemTrack(self.id)
+        track = reapy.Track(track_id)
+        return track
+
+    @track.setter
+    def track(self, track):
+        if isinstance(track, int):
+            track = reapy.Track(track, project=self.project)
+        RPR.MoveMediaItemToTrack(self.id, track.id)
+
+    def update(self):
+        """Update item in REAPER interface."""
+        RPR.UpdateItemInProject(self.id) 
+        
+@c:\Users\noah0\AppData\Local\Programs\Python\Python312\Lib\site-packages\reapy\core\project\project.py
+"""Defines class Project."""
+
+import pickle
+import codecs
+import os
+
+import reapy
+from reapy import reascript_api as RPR
+from reapy.core import ReapyObject
+from reapy.errors import RedoError, UndoError
+
+
+class Project(ReapyObject):
+
+    def __init__(self, id=None, index=-1):
+        """Build project by ID or index."""
+        if isinstance(id, int):
+            id, index = None, id
+        if id is None:
+            id = RPR.EnumProjects(index, None, 0)[0]
+        if not id.startswith('(ReaProject*)0x'):
+            id = Project._from_name(id).id
+        self.id = id
+        self._filename = None
+
+    def __eq__(self, other):
+        return hasattr(other, 'id') and self.id == other.id
+
+    @property
+    def _args(self):
+        return self.id,
+
+    @staticmethod
+    def _from_name(name):
+        """Return project with corresponding name."""
+        if not name.lower().endswith('.rpp'):
+            name += '.rpp'
+        with reapy.inside_reaper():
+            for project in reapy.get_projects():
+                project_name = project.name[:-4] + '.rpp'
+                if project_name == name:
+                    return project
+        raise NameError('"{}" is not currently open.'.format(name))
+
+    @reapy.inside_reaper()
+    def _get_track_by_name(self, name):
+        """Return first track with matching name."""
+        for track in self.tracks:
+            if track.name == name:
+                return track
+        raise KeyError(name)
+
+    def add_marker(self, position, name="", color=0):
+        """Create new marker and return its index."""
+        if isinstance(color, tuple):
+            color = reapy.rgb_to_native(color) | 0x1000000
+        marker_id = RPR.AddProjectMarker2(self.id, False, position, 0, name, -1, color)
+        return reapy.Marker(self, marker_id)
+
+    def add_region(self, start, end, name="", color=0):
+        """Create new region and return its index."""
+        if isinstance(color, tuple):
+            color = reapy.rgb_to_native(color) | 0x1000000
+        region_id = RPR.AddProjectMarker2(self.id, True, start, end, name, -1, color)
+        return reapy.Region(self, region_id)
+
+    @reapy.inside_reaper()
+    def add_track(self, index=0, name=""):
+        """Add track at a specified index."""
+        n_tracks = self.n_tracks
+        index = max(-n_tracks, min(index, n_tracks))
+        if index < 0:
+            index = index % n_tracks
+        with self.make_current_project():
+            RPR.InsertTrackAtIndex(index, True)
+        track = self.tracks[index]
+        track.name = name
+        return track
+
+    @property
+    def any_track_solo(self):
+        """Check if any track is soloed."""
+        return bool(RPR.AnyTrackSolo(self.id))
+
+    def beats_to_time(self, beats):
+        """Convert beats to time in seconds."""
+        return RPR.TimeMap2_QNToTime(self.id, beats)
+
+    def begin_undo_block(self):
+        """Start a new undo block."""
+        RPR.Undo_BeginBlock2(self.id)
+
+    @property
+    def bpi(self):
+        """Return project BPI (numerator of time signature)."""
+        return self.time_signature[1]
+
+    @reapy.inside_reaper()
+    @property
+    def bpm(self):
+        """Project BPM (beats per minute)."""
+        return self.time_signature[0]
+
+    @bpm.setter
+    def bpm(self, bpm):
+        """Set project BPM."""
+        RPR.SetCurrentBPM(self.id, bpm, True)
+
+    @property
+    def buffer_position(self):
+        """Position of next audio block being processed."""
+        return RPR.GetPlayPosition2Ex(self.id)
+
+    @reapy.inside_reaper()
+    def bypass_fx_on_all_tracks(self, bypass=True):
+        """Bypass or un-bypass FX on all tracks."""
+        with self.make_current_project():
+            RPR.BypassFxAllTracks(bypass)
+
+    @property
+    def can_redo(self):
+        """Whether redo is possible."""
+        try:
+            RPR.Undo_CanRedo2(self.id)
+            return True
+        except AttributeError:
+            return False
+
+    @property
+    def can_undo(self):
+        """Whether undo is possible."""
+        try:
+            RPR.Undo_CanUndo2(self.id)
+            return True
+        except AttributeError:
+            return False
+
+    def close(self):
+        """Close project and its corresponding tab."""
+        self._filename = os.path.join(self.path, self.name)
+        with self.make_current_project():
+            reapy.perform_action(40860)
+
+    @property
+    def cursor_position(self):
+        """Edit cursor position in seconds."""
+        return RPR.GetCursorPositionEx(self.id)
+
+    @cursor_position.setter
+    def cursor_position(self, position):
+        """Set edit cursor position."""
+        RPR.SetEditCurPos(position, True, True)
+
+    @reapy.inside_reaper()
+    def disarm_rec_on_all_tracks(self):
+        """Disarm record on all tracks."""
+        with self.make_current_project():
+            RPR.ClearAllRecArmed()
+
+    def end_undo_block(self, description=""):
+        """End undo block."""
+        RPR.Undo_EndBlock2(self.id, description, 0)
+
+    @reapy.inside_reaper()
+    @property
+    def focused_fx(self):
+        """FX that has focus if any, else None."""
+        if not self.is_current_project:
+            return
+        res = RPR.GetFocusedFX(0, 0, 0)
+        if not res[0]:
+            return
+        track = self.master_track if res[1] == 0 else self.tracks[res[1] - 1]
+        if res[0] == 1:  # Track FX
+            return track.fxs[res[3]]
+        item = track.items[res[2]]
+        take = item.takes[res[3] // 2**16]
+        return take.fxs[res[3] % 2**16]
+
+    def get_info_string(self, param_name: str) -> str:
+        """Get project info string."""
+        _, _, _, result, _ = RPR.GetSetProjectInfo_String(self.id, param_name, 'valuestrNeedBig', False)
+        return result
+
+    def get_info_value(self, param_name: str) -> float:
+        """Get project info value."""
+        return RPR.GetSetProjectInfo(self.id, param_name, 0, False)
+
+    def get_play_rate(self, position):
+        """Return project play rate at a given position."""
+        return RPR.Master_GetPlayRateAtTime(position, self.id)
+
+    def get_selected_item(self, index):
+        """Return index-th selected item."""
+        item_id = RPR.GetSelectedMediaItem(self.id, index)
+        return reapy.Item(item_id)
+
+    def get_selected_track(self, index):
+        """Return index-th selected track."""
+        track_id = RPR.GetSelectedTrack(self.id, index)
+        return reapy.Track(track_id)
+
+    def get_ext_state(self, section, key, pickled=False):
+        """Return external state of project."""
+        value = RPR.GetProjExtState(self.id, section, key, "", 2**31 - 1)[4]
+        if value and pickled:
+            value = pickle.loads(codecs.decode(value.encode(), "base64"))
+        return value
+
+    def glue_items(self, within_time_selection=False):
+        """Glue items (action shortcut)."""
+        action_id = 41588 if within_time_selection else 40362
+        self.perform_action(action_id)
+
+    @property
+    def has_valid_id(self):
+        """Check if ReaScript ID is valid."""
+        return bool(RPR.ValidatePtr(*self._get_pointer_and_name()))
+
+    @property
+    def is_dirty(self):
+        """Check if project is dirty (i.e. needing save)."""
+        return RPR.IsProjectDirty(self.id)
+
+    @property
+    def is_current_project(self):
+        """Check if project is current project."""
+        return self == Project()
+
+    @property
+    def is_paused(self):
+        """Check if project is paused."""
+        return bool(RPR.GetPlayStateEx(self.id) & 2)
+
+    @property
+    def is_playing(self):
+        """Check if project is playing."""
+        return bool(RPR.GetPlayStateEx(self.id) & 1)
+
+    @property
+    def is_recording(self):
+        """Check if project is recording."""
+        return bool(RPR.GetPlayStateEx(self.id) & 4)
+
+    @reapy.inside_reaper()
+    @property
+    def is_stopped(self):
+        """Check if project is stopped."""
+        return not self.is_playing and not self.is_paused
+
+    @reapy.inside_reaper()
+    @property
+    def items(self):
+        """List of items in project."""
+        n_items = self.n_items
+        item_ids = [RPR.GetMediaItem(self.id, i) for i in range(n_items)]
+        return list(map(reapy.Item, item_ids))
+
+    @property
+    def length(self):
+        """Project length in seconds."""
+        return RPR.GetProjectLength(self.id)
+
+    @reapy.inside_reaper()
+    @property
+    def last_touched_fx(self):
+        """Last touched FX and corresponding parameter index."""
+        if not self.is_current_project:
+            return None, None
+        res = RPR.GetLastTouchedFX(0, 0, 0)
+        if not res[0]:
+            return None, None
+        track = self.tracks[res[1] - 1] if res[1] else self.master_track
+        if res[0] == 1:  # Track FX
+            return track.fxs[res[2]], res[3]
+        item = track.items[res[2]]
+        take = item.takes[res[3] // 2**16]
+        return take.fxs[res[3] % 2**16], res[3]
+
+    def make_current_project(self):
+        """Set project as current project."""
+        return _MakeCurrentProject(self)
+
+    def mark_dirty(self):
+        """Mark project as dirty (i.e. needing save)."""
+        RPR.MarkProjectDirty(self.id)
+
+    @reapy.inside_reaper()
+    @property
+    def markers(self):
+        """List of project markers."""
+        ids = [
+            RPR.EnumProjectMarkers2(self.id, i, 0, 0, 0, 0, 0)
+            for i in range(self.n_regions + self.n_markers)
+        ]
+        return [reapy.Marker(self, i[0]) for i in ids if not i[3]]
+
+    @property
+    def master_track(self):
+        """Project master track."""
+        track_id = RPR.GetMasterTrack(self.id)
+        return reapy.Track(track_id)
+
+    @reapy.inside_reaper()
+    def mute_all_tracks(self, mute=True):
+        """Mute or unmute all tracks."""
+        with self.make_current_project():
+            RPR.MuteAllTracks(mute)
+
+    @property
+    def n_items(self):
+        """Number of items in project."""
+        return RPR.CountMediaItems(self.id)
+
+    @property
+    def n_markers(self):
+        """Number of markers in project."""
+        return RPR.CountProjectMarkers(self.id, 0, 0)[2]
+
+    @property
+    def n_regions(self):
+        """Number of regions in project."""
+        return RPR.CountProjectMarkers(self.id, 0, 0)[3]
+
+    @property
+    def n_selected_items(self):
+        """Number of selected media items."""
+        return RPR.CountSelectedMediaItems(self.id)
+
+    @property
+    def n_selected_tracks(self):
+        """Number of selected tracks in project (excluding master)."""
+        return RPR.CountSelectedTracks2(self.id, False)
+
+    @property
+    def n_tempo_markers(self):
+        """Number of tempo/time signature markers in project."""
+        return RPR.CountTempoTimeSigMarkers(self.id)
+
+    @property
+    def n_tracks(self):
+        """Number of tracks in project."""
+        return RPR.CountTracks(self.id)
+
+    @property
+    def name(self):
+        """Project name."""
+        _, name, _ = RPR.GetProjectName(self.id, "", 2048)
+        return name
+
+    def open(self, in_new_tab=False):
+        """Open project, if it was closed by Project.close."""
+        if self._filename is None:
+            raise RuntimeError("project hasn't been closed")
+        self.id = reapy.open_project(self._filename, in_new_tab).id
+
+    def pause(self):
+        """Hit pause button."""
+        RPR.OnPauseButtonEx(self.id)
+
+    @property
+    def path(self):
+        """Project path."""
+        _, path, _ = RPR.GetProjectPathEx(self.id, "", 2048)
+        return path
+
+    def perform_action(self, action_id):
+        """Perform action with ID `action_id`."""
+        RPR.Main_OnCommandEx(action_id, 0, self.id)
+
+    def play(self):
+        """Hit play button."""
+        RPR.OnPlayButtonEx(self.id)
+
+    @property
+    def play_position(self):
+        """Latency-compensated actual-what-you-hear position in seconds."""
+        return RPR.GetPlayPositionEx(self.id)
+
+    @property
+    def play_rate(self):
+        """Project play rate at the cursor position."""
+        return RPR.Master_GetPlayRate(self.id)
+
+    @reapy.inside_reaper()
+    def record(self):
+        """Hit record button."""
+        with self.make_current_project():
+            reapy.perform_action(1013)
+
+    def redo(self):
+        """Redo last action."""
+        success = RPR.Undo_DoRedo2(self.id)
+        if not success:
+            raise RedoError
+
+    @reapy.inside_reaper()
+    @property
+    def regions(self):
+        """List of project regions."""
+        ids = [
+            RPR.EnumProjectMarkers2(self.id, i, 0, 0, 0, 0, 0)
+            for i in range(self.n_regions + self.n_markers)
+        ]
+        return [reapy.Region(self, i[0]) for i in ids if i[3]]
+
+    def save(self, force_save_as=False):
+        """Save project."""
+        RPR.Main_SaveProject(self.id, force_save_as)
+
+    def select(self, start, end=None, length=None):
+        if end is None:
+            assert length is not None, "Either `end` or `length` must be specified."
+            end = start + length
+        self.time_selection = start, end
+
+    def select_all_items(self, selected=True):
+        """Select or unselect all items."""
+        RPR.SelectAllMediaItems(self.id, selected)
+
+    def select_all_tracks(self):
+        """Select all tracks."""
+        self.perform_action(40296)
+
+    @property
+    def selected_envelope(self):
+        """Project selected envelope."""
+        envelope_id = RPR.GetSelectedTrackEnvelope(self.id)
+        return None if envelope_id == 0 else reapy.Envelope(envelope_id)
+
+    @reapy.inside_reaper()
+    @property
+    def selected_items(self):
+        """List of all selected items."""
+        return [
+            reapy.Item(RPR.GetSelectedMediaItem(self.id, i))
+            for i in range(self.n_selected_items)
+        ]
+
+    @reapy.inside_reaper()
+    @property
+    def selected_tracks(self):
+        """List of selected tracks (excluding master)."""
+        return [
+            reapy.Track(RPR.GetSelectedTrack(self.id, i))
+            for i in range(self.n_selected_tracks)
+        ]
+
+    @selected_tracks.setter
+    def selected_tracks(self, tracks):
+        self.unselect_all_tracks()
+        for track in tracks:
+            track.select()
+
+    def set_info_string(self, param_name, param_string):
+        """Set project info string."""
+        RPR.GetSetProjectInfo_String(self.id, param_name, param_string, True)
+
+    def set_info_value(self, param_name, param_value):
+        """Set project info value."""
+        RPR.GetSetProjectInfo(self.id, param_name, param_value, True)
+
+    def set_ext_state(self, section, key, value, pickled=False):
+        """Set external state of project."""
+        if pickled:
+            value = pickle.dumps(value)
+            value = codecs.encode(value, "base64").decode()
+        if len(value) > 2**31 - 2:
+            raise ValueError("Dumped value length must not be over 2**31 - 2.")
+        RPR.SetProjExtState(self.id, section, key, value)
+
+    @reapy.inside_reaper()
+    def solo_all_tracks(self):
+        """Solo all tracks in project."""
+        with self.make_current_project():
+            RPR.SoloAllTracks(1)
+
+    def stop(self):
+        """Hit stop button."""
+        RPR.OnStopButtonEx(self.id)
+
+    @reapy.inside_reaper()
+    @property
+    def time_selection(self):
+        """Project time selection."""
+        return reapy.TimeSelection(self)
+
+    @time_selection.setter
+    def time_selection(self, selection):
+        """Set time selection bounds."""
+        self.time_selection._set_start_end(*selection)
+
+    @time_selection.deleter
+    def time_selection(self):
+        """Delete current time selection."""
+        self.time_selection._set_start_end(0, 0)
+
+    @property
+    def time_signature(self):
+        """Project time signature."""
+        _, bpm, bpi = RPR.GetProjectTimeSignature2(self.id, 0, 0)
+        return bpm, bpi
+
+    def time_to_beats(self, time):
+        """Convert time in seconds to beats."""
+        return RPR.TimeMap2_timeToQN(self.id, time)
+
+    @property
+    def tracks(self):
+        """List of project tracks."""
+        return reapy.TrackList(self)
+
+    def undo(self):
+        """Undo last action."""
+        success = RPR.Undo_DoUndo2(self.id)
+        if not success:
+            raise UndoError
+
+    def unmute_all_tracks(self):
+        """Unmute all tracks."""
+        self.mute_all_tracks(mute=False)
+
+    def unselect_all_tracks(self):
+        """Unselect all tracks."""
+        self.perform_action(40297)
+
+    @reapy.inside_reaper()
+    def unsolo_all_tracks(self):
+        """Unsolo all tracks in project."""
+        with self.make_current_project():
+            RPR.SoloAllTracks(0)
+
+
+class _MakeCurrentProject:
+
+    """Context manager used by Project.make_current_project."""
+
+    def __init__(self, project):
+        self.current_project = self._make_current_project(project)
+
+    @staticmethod
+    @reapy.inside_reaper()
+    def _make_current_project(project):
+        """Set current project and return the previous current project."""
+        current_project = reapy.Project()
+        RPR.SelectProjectInstance(project.id)
+        return current_project
+
+    def __enter__(self):
+        pass
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if self.current_project.has_valid_id:
+            self.current_project.make_current_project() 
+
+@c:\Users\noah0\AppData\Local\Programs\Python\Python312\Lib\site-packages\reapy\core\item\take.py 
+class Take(ReapyObject):
+
+    _class_name = "Take"
+
+    def __init__(self, id):
+        self.id = id
+
+    def __eq__(self, other):
+        return isinstance(other, Take) and self.id == other.id
+
+    @property
+    def _args(self):
+        return self.id,
+
+    def add_audio_accessor(self):
+        """Create audio accessor and return it."""
+        audio_accessor_id = RPR.CreateTakeAudioAccessor(self.id)
+        return reapy.AudioAccessor(audio_accessor_id)
+
+    @reapy.inside_reaper()
+    def add_event(self, message, position, unit="seconds"):
+        """Add generic event to the take at position."""
+        ppqpos = self._resolve_midi_unit((position,), unit)[0]
+        bytestr = self._midi_to_bytestr(message)
+        RPR.MIDI_InsertEvt(self.id, False, False, ppqpos, bytestr, len(bytestr))
+
+    def add_fx(self, name, even_if_exists=True):
+        """Add FX to track and return it."""
+        index = RPR.TakeFX_AddByName(self.id, name, 1 - 2 * even_if_exists)
+        if index == -1:
+            raise ValueError("Can't find FX named {}".format(name))
+        return reapy.FX(self, index)
+
+    @reapy.inside_reaper()
+    def add_note(self, start, end, pitch, velocity=100, channel=0, selected=False, muted=False, unit="seconds", sort=True):
+        """Add MIDI note to take."""
+        start, end = self._resolve_midi_unit((start, end), unit)
+        sort = bool(not sort)
+        args = (self.id, selected, muted, start, end, channel, pitch, velocity, sort)
+        RPR.MIDI_InsertNote(*args)
+
+    @reapy.inside_reaper()
+    def add_sysex(self, message, position, unit="seconds", evt_type=-1):
+        """Add SysEx event to take."""
+        bytestr = self._midi_to_bytestr(message)
+        ppqpos = self._resolve_midi_unit((position,), unit)[0]
+        RPR.MIDI_InsertTextSysexEvt(self.id, False, False, ppqpos, evt_type, bytestr, len(bytestr))
+
+    def beat_to_ppq(self, beat):
+        """Convert beat number to MIDI ticks."""
+        return RPR.MIDI_GetPPQPosFromProjQN(self.id, beat)
+
+    @property
+    def cc_events(self):
+        """List of CC events on take."""
+        return reapy.CCList(self)
+
+    @property
+    def envelopes(self):
+        return reapy.EnvelopeList(self)
+
+    @property
+    def fxs(self):
+        """FXs on take."""
+        return reapy.FXList(self)
+
+    def get_info_value(self, param_name):
+        return RPR.GetMediaItemTakeInfo_Value(self.id, param_name)
+
+    @reapy.inside_reaper()
+    @property
+    def has_valid_id(self):
+        """Check if ReaScript ID is valid."""
+        try:
+            project_id = self.track.project.id
+        except (OSError, AttributeError):
+            return False
+        pointer, name = self._get_pointer_and_name()
+        return bool(RPR.ValidatePtr2(project_id, pointer, name))
+
+    @reapy.inside_reaper()
+    @property
+    def is_active(self):
+        """Check if take is active."""
+        return self == self.item.active_take
+
+    @property
+    def is_midi(self):
+        """Check if take contains MIDI or audio."""
+        return bool(RPR.TakeIsMIDI(self.id))
+
+    @property
+    def item(self):
+        """Parent item."""
+        return reapy.Item(RPR.GetMediaItemTake_Item(self.id))
+
+    @property
+    def guid(self):
+        """Used for communication within other scripts."""
+        _, _, _, guid, _ = RPR.GetSetMediaItemTakeInfo_String(self.id, 'GUID', 'stringNeedBig', False)
+        return guid
+
+    def make_active_take(self):
+        """Make take active."""
+        RPR.SetActiveTake(self.id)
+
+    @property
+    def midi_events(self):
+        """Get all midi events as EventList."""
+        return reapy.core.item.midi_event.MIDIEventList(self)
+
+    def midi_hash(self, notes_only=False):
+        """Get hash of MIDI-data to compare with later."""
+        return RPR.MIDI_GetHash(self.id, notes_only, 'hash', 1024**2)[3]
+
+    def _midi_to_bytestr(self, message):
+        return bytes(message).decode('latin-1')
+
+    @property
+    def n_cc(self):
+        """Number of MIDI CC events in take."""
+        return RPR.MIDI_CountEvts(self.id, 0, 0, 0)[3]
+
+    @property
+    def n_envelopes(self):
+        """Number of envelopes on take."""
+        return RPR.CountTakeEnvelopes(self.id)
+
+    @property
+    def n_fxs(self):
+        """Number of FXs on take."""
+        return RPR.TakeFX_GetCount(self.id)
+
+    @property
+    def n_midi_events(self):
+        """Number of MIDI events in take."""
+        return RPR.MIDI_CountEvts(self.id, 1, 1, 1)[0]
+
+    @property
+    def n_notes(self):
+        """Number of MIDI notes in take."""
+        return RPR.MIDI_CountEvts(self.id, 0, 0, 0)[2]
+
+    @property
+    def n_text_sysex(self):
+        """Number of MIDI text/sysex events in take."""
+        return RPR.MIDI_CountEvts(self.id, 0, 0, 0)[4]
+
+    @property
+    def name(self):
+        """Take name."""
+        if self._is_defined:
+            return RPR.GetTakeName(self.id)
+        return ""
+
+    @property
+    def notes(self):
+        """List of MIDI notes on take."""
+        return reapy.NoteList(self)
+
+    def ppq_to_beat(self, ppq):
+        """Convert MIDI ticks to beats."""
+        return RPR.MIDI_GetProjQNFromPPQPos(self.id, ppq)
+
+    def ppq_to_time(self, ppq):
+        """Convert MIDI ticks to seconds."""
+        return RPR.MIDI_GetProjTimeFromPPQPos(self.id, ppq)
+
+    @reapy.inside_reaper()
+    @property
+    def project(self):
+        """Take parent project."""
+        return self.item.project
+
+    @reapy.inside_reaper()
+    def _resolve_midi_unit(self, pos_tuple, unit="seconds"):
+        """Get positions as ppq from tuple of positions."""
+        if unit == "ppq":
+            return pos_tuple
+        item_start_seconds = self.item.position
+
+        def resolver(pos):
+            if unit == "beats":
+                take_start_beat = self.track.project.time_to_beats(item_start_seconds)
+                return self.beat_to_ppq(take_start_beat + pos)
+            if unit == "seconds":
+                return self.time_to_ppq(item_start_seconds + pos)
+            raise ValueError('unit param should be one of seconds|beats|ppq')
+        return [resolver(pos) for pos in pos_tuple]
+
+    def select_all_midi_events(self, select=True):
+        """Select or unselect all MIDI events."""
+        RPR.MIDI_SelectAll(self.id, select)
+
+    def set_info_value(self, param_name, value):
+        return RPR.SetMediaItemTakeInfo_Value(self.id, param_name, value)
+
+    def sort_events(self):
+        """Sort MIDI events on take."""
+        RPR.MIDI_Sort(self.id)
+
+    @property
+    def source(self):
+        """Take source."""
+        return reapy.Source(RPR.GetMediaItemTake_Source(self.id))
+
+    @property
+    def start_offset(self):
+        """Start time of the take relative to start of source file."""
+        return self.get_info_value("D_STARTOFFS")
+
+    def time_to_ppq(self, time):
+        """Convert time in seconds to MIDI ticks."""
+        return RPR.MIDI_GetPPQPosFromProjTime(self.id, time)
+
+    @property
+    def track(self):
+        """Parent track of take."""
+        track_id = RPR.GetMediaItemTake_Track(self.id)
+        return reapy.Track(track_id)
+
+    def unselect_all_midi_events(self):
+        """Unselect all MIDI events."""
+        self.select_all_midi_events(select=False)
+
+    @property
+    def visible_fx(self):
+        """Visible FX in FX chain if any, else None."""
+        with reapy.inside_reaper():
+            return self.fxs[RPR.TakeFX_GetChainVisible(self.id)]
+

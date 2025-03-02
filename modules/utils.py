@@ -2,6 +2,8 @@ import logging
 import os
 import sys
 from datetime import datetime
+from PyQt5.QtWidgets import QWidget, QLabel, QGroupBox, QVBoxLayout, QProgressBar
+
 def setup_logger(name, log_file_prefix, level=logging.INFO):
    """Function to setup a logger."""
    # Determine the base path for logs
@@ -31,3 +33,21 @@ def setup_logger(name, log_file_prefix, level=logging.INFO):
        logger.error("Uncaught exception", exc_info=(exc_type, exc_value, exc_traceback))
    sys.excepthook = handle_exception
    return logger
+
+class BaseAIPanel(QWidget):
+    """Base class for AI panels with standardized UI elements."""
+    
+    def __init__(self):
+        super().__init__()
+        self.feedback_label = QLabel()
+        self.feedback_label.setWordWrap(True)
+        self.progress_bar = QProgressBar()
+        
+    def create_input_group(self, title: str, widgets: list) -> QGroupBox:
+        """Create standardized input group with title."""
+        group = QGroupBox(title)
+        layout = QVBoxLayout()
+        for widget in widgets:
+            layout.addWidget(widget)
+        group.setLayout(layout)
+        return group

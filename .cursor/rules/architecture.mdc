@@ -1,0 +1,23 @@
+---
+description: project architecture
+globs: 
+alwaysApply: true
+---
+erview
+Yuneify.py Main entry point for the Yuneify application, initializing the app, setting up the main window (MainMenu), and managing logging. The MainMenu class handles the UI, including buttons for starting the context wheel, opening the AI UI, and accessing keybind settings.
+Yuneify_Settings.py Contains the KeybindUI class for configuring keyboard shortcuts. Keybinds are loaded from and saved to a JSON file, ensuring user preferences persist.
+Yuneify_AI.py Initializes the Yuneify AI application, setting up the main window, menu bar, and UI components for orchestration and MIDI visualization. Manages project actions like creating, opening, and saving projects.
+ui_overlay.py Defines the OverlayUI class for a translucent overlay that displays messages with fade animations, enhancing user feedback.
+utils.py Contains utility functions, including logger setup and a base class for AI panels, aiding in event tracking and UI standardization.
+MIDI_AI.py Implements the AIOrchestrationStyleSelector for selecting orchestration styles and the AIMidiOrchestrator for handling MIDI data orchestration.
+AI_orchestration.py Defines the OrchestrationConfigurator for configuring orchestration parameters and generating plans based on user input and MIDI data.
+styles.py Contains the apply_dark_theme function for a consistent dark theme across the application.
+ai_models.py Defines base classes and error handling for AI models, including the OpenAIModel for generating text responses based on MIDI data.
+AI_composition_review.py Implements the CompositionSuggestionApp for generating composition suggestions, including chord and melody development and MIDI analysis.
+MIDI_Visualizer.py Defines the MidiVisualizer class for visualizing MIDI notes graphically, with zoom functionality and user interaction instructions.
+Yuneify_ContextWheel.py Defines the ContextWheel class for managing actions in a REAPER project, providing quick access to functionalities like muting tracks and managing VST presets.
+Create_Print_Tracks.py Contains the create_print_tracks function for creating new tracks in REAPER for audio printing, essential for audio routing.
+Height_Lock.py Defines the TrackHeightLock class for managing track height consistency in REAPER during project editing.
+Auto_VST_Window.py Implements the FloatingFXController for managing floating FX windows in REAPER, enhancing user access to FX controls.
+Insert_Kontakt_Track.py Contains the VSTPresetManager class for managing VST presets for Kontakt instruments, crucial for users working with VSTs.
+Marker_Manager.py Defines the MarkerAdjustWindow class for managing markers in REAPER projects, essential for precise timing and organization.

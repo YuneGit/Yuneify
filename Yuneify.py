@@ -5,7 +5,7 @@ from PySide6.QtCore import Qt, QThread, Signal, QTimer
 from PySide6.QtGui import QPixmap
 from modules.Yuneify_Settings import KeybindUI
 from modules.Yuneify_ContextWheel import main as context_wheel_main
-from Yuneify_AI import MainApplication as yuneify_ai_main
+from modules.Yuneify_AI import MainApplication as yuneify_ai_main
 from modules.utils import setup_logger
 import subprocess
 import shutil

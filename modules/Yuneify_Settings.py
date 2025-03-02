@@ -98,17 +98,26 @@ class KeybindUI(QWidget):
 
     def load_keybinds(self):
         script_folder = os.path.dirname(os.path.abspath(__file__))
-        config_folder = os.path.join(script_folder, "config-files")
+        # Correct path to config files (go up one level from modules folder)
+        config_folder = os.path.normpath(os.path.join(script_folder, "..", "config files"))
         keybind_file = os.path.join(config_folder, "keybinds.json")
+        
+        # Create config directory if it doesn't exist
+        os.makedirs(config_folder, exist_ok=True)
+        
         try:
             with open(keybind_file, 'r') as file:
                 return json.load(file)
         except FileNotFoundError:
-            return {
+            # Create default keybinds file if missing
+            default_keybinds = {
                 'state_suite': 'CTRL+SHIFT+ALT+Q',
                 'send_manager': 'CTRL+SHIFT+ALT+W',
                 'midi_suite': 'CTRL+SHIFT+ALT+E'
             }
+            with open(keybind_file, 'w') as file:
+                json.dump(default_keybinds, file)
+            return default_keybinds
 
     def save_keybinds(self):
         script_folder = os.path.dirname(os.path.abspath(__file__))

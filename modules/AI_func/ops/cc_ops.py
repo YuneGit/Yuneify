@@ -81,3 +81,59 @@ class CCOperations:
                 False
             )
             print(f"Updated CC{cc_num} at position {evt.position} to value {new_cc_value}.")
+
+    def adjust_cc_bulk(self, delta, overlay):
+        """Bulk adjust CC values with undo support"""
+        try:
+            project = reapy.Project()
+            item = project.get_selected_item(0)
+            if not item or not item.active_take or not item.active_take.is_midi:
+                return
+
+            take = item.active_take
+            selected_cc = [cc for cc in take.cc_events if cc.selected]
+            if not selected_cc:
+                return
+
+            with reapy.undo_block(f"Adjust CC {'+' if delta > 0 else '-'}{abs(delta)}"):
+                for cc in selected_cc:
+                    current_value = cc.messages[1]
+                    new_value = max(0, min(127, current_value + delta))
+                    RPR.MIDI_SetCC(
+                        take.id, cc.index, cc.selected, cc.muted, cc.position,
+                        0xB0, cc.channel, cc.messages[0], new_value, False
+                    )
+                item.update()
+
+            overlay.show_message(f"Adjusted {len(selected_cc)} CC by {delta}")
+            
+        except Exception as e:
+            print(f"CC bulk adjust error: {e}")
+
+    def _adjust_cc_values(self, factor):
+        """Generic CC value adjustment"""
+        project = reapy.Project()
+        item = project.get_selected_item(0)
+        if item and item.active_take and item.active_take.is_midi:
+            take = item.active_take
+            # Get all CC events and filter selected ones
+            for cc in take.cc_events:
+                if cc.selected:
+                    # Get current value from messages tuple (controller, value)
+                    current_value = cc.messages[1]
+                    new_value = max(0, min(127, int(current_value * factor)))
+                    # Update CC using ReaScript API with all required parameters
+                    RPR.MIDI_SetCC(
+                        take.id,        # MediaItem_Take
+                        cc.index,       # integer ccidx
+                        cc.selected,    # boolean selectedIn
+                        cc.muted,       # boolean mutedIn
+                        cc.position,    # number ppqposIn
+                        0xB0,           # integer chanmsgIn (CC message type)
+                        cc.channel,     # integer chanIn
+                        cc.messages[0], # integer msg2In (CC number)
+                        new_value,      # integer msg3In (CC value)
+                        False           # boolean noSortIn
+                    )
+            # Update the parent item
+            item.update()

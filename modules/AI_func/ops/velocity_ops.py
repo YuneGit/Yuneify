@@ -156,3 +156,10 @@ class VelocityOperations:
                 False
             )
             print(f"Scaled note (Pitch: {note.pitch}) to new velocity: {new_velocity}.")
+
+    def adjust_velocity(self, amount):
+        """Adjust selected note velocities by amount"""
+        for note in self.get_selected_notes():
+            new_vel = note.velocity + amount
+            note.velocity = max(0, min(127, new_vel))
+        self.update_notes()

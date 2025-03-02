@@ -1,20 +1,24 @@
 import sys
 import math
 import keyboard
+import json
+import os
+
 from PySide6.QtWidgets import QApplication, QMainWindow, QPushButton, QVBoxLayout, QWidget, QSizePolicy
 from PySide6.QtCore import Qt, QPoint, Signal, QObject, QEvent, QThread, QTimer
 from PySide6.QtGui import QPainter, QColor, QPen, QCursor
-from modules.State_Suite import TrackControlApp
-from modules.MIDI_Suite import MidiSuite
-from Fast_MIDI_Suite import FastMidiSuite
-from modules.Send_Manager import TrackRouter
-import json
-from modules.PRINT import create_print_tracks
-from modules.Height_Lock import TrackHeightLock
-from modules.Auto_VST_Window import FloatingFXController
+
+from modules.CWheel_func.State_Suite import TrackControlApp
+from modules.CWheel_func.MIDI_Suite import MidiSuite
+from modules.CWheel_func.Fast_MIDI_Suite import FastMidiSuite
+from modules.CWheel_func.Send_Manager import TrackRouter
+from modules.CWheel_func.Create_Print_Tracks import create_print_tracks
+from modules.CWheel_func.Height_Lock import TrackHeightLock
+from modules.CWheel_func.Auto_VST_Window import FloatingFXController
+from modules.CWheel_func.Insert_Kontakt_Track import create_vst_preset_manager
+from modules.CWheel_func.Marker_Manager import MarkerAdjustWindow
 from modules.utils import setup_logger
-from modules.Insert_Kontakt_Track import create_vst_preset_manager
-from modules.Marker_Manager import MarkerAdjustWindow
+
 
 class MouseFilter(QObject):
     def __init__(self, window):
@@ -285,10 +289,29 @@ def create_send_sub_wheel(track_router, start_index=0):
     sub_wheel.show_signal.emit()
 
 def load_keybinds():
+    config_dir = "config files"
+    config_path = os.path.join(config_dir, "keybinds.json")
+    
     try:
-        with open("keybinds.json", 'r') as file:
+        # Create config directory if it doesn't exist
+        if not os.path.exists(config_dir):
+            os.makedirs(config_dir)
+            
+        # Try loading from config files directory first
+        with open(config_path, 'r') as file:
             return json.load(file)
     except FileNotFoundError:
+        # Create default keybinds if file doesn't exist
+        default_keybinds = {
+            'state_suite': 'ctrl+shift+alt+q',
+            'send_manager': 'ctrl+shift+alt+w',
+            'midi_suite': 'ctrl+shift+alt+e'
+        }
+        with open(config_path, 'w') as file:
+            json.dump(default_keybinds, file, indent=2)
+        return default_keybinds
+    except json.JSONDecodeError:
+        print("Invalid keybinds.json, using defaults")
         return {
             'state_suite': 'ctrl+shift+alt+q',
             'send_manager': 'ctrl+shift+alt+w',
